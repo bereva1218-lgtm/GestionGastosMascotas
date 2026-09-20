@@ -8,8 +8,8 @@ enfocado en gatos, pero el modelo permite agregar otras mascotas en el futuro.
 
 - [Contexto](Context/README.md): equipo, propósito, tecnologías, componentes,
 	requisitos y funcionalidades iniciales.
-- [Aplicación](Aplicacion/README.md): propuesta de módulos, datos principales y
-	orden recomendado de implementación.
+- [Aplicación](Context/Aplicacion.md): propuesta de módulos, datos principales
+	y orden recomendado de implementación.
 
 ## Estado actual
 
@@ -22,5 +22,3 @@ plantillas de la aplicación.
 ```bash
 python manage.py runserver
 ```
-
-La aplicación estará disponible en `http://127.0.0.1:8000/`.

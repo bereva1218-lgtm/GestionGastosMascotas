@@ -1,7 +1,6 @@
 # Aplicación
 
-Esta carpeta separa la propuesta técnica del contexto del proyecto. La
-implementación deberá convertir los requisitos de `Context/` en modelos,
+La implementación deberá convertir los requisitos de `Context/` en modelos,
 formularios, vistas y plantillas de Django.
 
 ## Orden recomendado
