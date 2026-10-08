@@ -8,17 +8,24 @@ enfocado en gatos, pero el modelo permite agregar otras mascotas en el futuro.
 
 - [Contexto](Context/README.md): equipo, propósito, tecnologías, componentes,
 	requisitos y funcionalidades iniciales.
+- [Arquitectura](Context/Arquitectura.md): capas, modelo de datos y cómo se
+	cumplen las reglas de negocio.
+- [Memory](Memory.md): bitácora del proceso y próximos pasos.
 - [Aplicación](Context/Aplicacion.md): propuesta de módulos, datos principales
 	y orden recomendado de implementación.
 
 ## Estado actual
 
-El proyecto parte de una configuración base de Django con SQLite. La
-documentación define el alcance antes de construir los modelos, vistas y
-plantillas de la aplicación.
+Aplicación `mascotas` con los modelos, migraciones (incluye las categorías
+iniciales), administrador y pruebas de reglas de negocio. Faltan vistas,
+plantillas y reportes; ver [Memory](Memory.md).
 
 ## Ejecución local
 
+Requiere Python 3.12 o superior.
+
 ```bash
+pip install -r requirements.txt
+python manage.py migrate
 python manage.py runserver
 ```

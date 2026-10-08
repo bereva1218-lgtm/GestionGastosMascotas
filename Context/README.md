@@ -10,3 +10,4 @@ gestión de gastos para mascotas.
 - [Módulos](Modulos.md)
 - [Funcionalidades](funcionalidades.md)
 - [Aplicación](Aplicacion.md)
+- [Arquitectura](Arquitectura.md)
