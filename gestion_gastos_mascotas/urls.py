@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from gastoMascota.views import primeravista, cargamosMensaje, objeto_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', primeravista, name='inicio'),
+    path('cm/', cargamosMensaje, name='mensaje'),
+    path('objeto/', objeto_view, name='objeto'),
 ]
