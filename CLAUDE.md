@@ -31,7 +31,7 @@ No linter/formatter is configured.
 
 ## Architecture
 
-Project package: `gestion_gastos_mascotas/` (settings, root `urls.py`). All domain code lives in the single app `mascotas/` (its urls not yet included from the root `urls.py`). Templates use Django's template engine + CSS (`APP_DIRS=True`).
+Project package: `gestion_gastos_mascotas/` (settings, root `urls.py`). Domain models live in `mascotas/` (its urls not yet included from the root `urls.py`). `gastoMascota/` is a teammate's practice app with demo views (`/`, `/cm/`, `/objeto/`) wired directly in the root `urls.py`; its templates are in `gestion_gastos_mascotas/templates/` (`TEMPLATES.DIRS`). App templates use `APP_DIRS=True`.
 
 Entities (`Context/Aplicacion.md`):
 

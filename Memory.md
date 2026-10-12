@@ -46,6 +46,20 @@ Decisiones:
   y en la base de datos (`CheckConstraint`).
 - `cantidad` es decimal para permitir compras por peso (por ejemplo 1.5 kg de comida).
 
+### 2026-10-09 — Vistas de práctica (`gastoMascota`)
+
+- Un compañero agregó la app `gastoMascota` con vistas de prueba: `/` (inicio),
+  `/cm/` (mensaje) y `/objeto/` (objeto de ejemplo).
+- Las plantillas están en `gestion_gastos_mascotas/templates/`, configurada en
+  `TEMPLATES['DIRS']`.
+
+### 2026-10-12 — Integración de ramas
+
+- Se integraron los cambios de `gastoMascota` con la app `mascotas`. Las dos
+  quedan en `INSTALLED_APPS`; pruebas y páginas funcionan.
+- Pendiente decidir en equipo: unificar las vistas en `mascotas` o mantener
+  `gastoMascota` para la interfaz.
+
 ## Próximos pasos
 
 1. Formularios (`ModelForm`) para mascotas, gastos y medicamentos.
