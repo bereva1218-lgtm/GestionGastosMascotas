@@ -167,10 +167,11 @@ class FiltrosCompartidosTests(SimpleTestCase):
         self.assertEqual(fecha_larga(None), '')
 
     def test_porcentaje(self):
-        self.assertEqual(porcentaje(Decimal('25'), Decimal('100')), '25 %')
-        self.assertEqual(porcentaje(Decimal('1'), Decimal('1000')), '< 1 %')
-        self.assertEqual(porcentaje(Decimal('0'), Decimal('100')), '0 %')
-        self.assertEqual(porcentaje(Decimal('5'), Decimal('0')), '0 %')
+        # Espacio duro entre la cifra y el signo para que no se separen.
+        self.assertEqual(porcentaje(Decimal('25'), Decimal('100')), '25\xa0%')
+        self.assertEqual(porcentaje(Decimal('1'), Decimal('1000')), '<\xa01\xa0%')
+        self.assertEqual(porcentaje(Decimal('0'), Decimal('100')), '0\xa0%')
+        self.assertEqual(porcentaje(Decimal('5'), Decimal('0')), '0\xa0%')
 
     def test_tono_acepta_id(self):
         self.assertEqual(tono(7), 'avatar--t1')

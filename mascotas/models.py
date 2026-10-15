@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from .reglas import calcular_valor_total
 
-POSITIVO = [MinValueValidator(Decimal('0.01'))]
+POSITIVO = [MinValueValidator(Decimal('0.01'), message='Debe ser mayor que 0.')]
 
 
 class Mascota(models.Model):
@@ -71,7 +71,7 @@ class Gasto(models.Model):
     notas = models.TextField(blank=True)
 
     class Meta:
-        ordering = ['-fecha']
+        ordering = ['-fecha', '-pk']
         constraints = [
             models.CheckConstraint(condition=Q(cantidad__gt=0), name='cantidad_positiva'),
             models.CheckConstraint(condition=Q(valor_unitario__gt=0), name='valor_unitario_positivo'),
@@ -112,6 +112,11 @@ class Medicamento(models.Model):
         if self.fecha_fin is None:
             return None
         return (self.fecha_fin - timezone.localdate()).days
+
+    @property
+    def programado(self):
+        """El tratamiento todavía no ha empezado."""
+        return self.fecha_inicio > timezone.localdate()
 
     @property
     def activo(self):

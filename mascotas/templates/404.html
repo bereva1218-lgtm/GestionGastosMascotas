@@ -75,12 +75,3 @@
 </div>
 {% endblock %}
 
-{% block js %}
-<script>
-    {# «Volver atrás» solo aparece si hay una página anterior en el historial. #}
-    document.querySelectorAll('[data-volver]').forEach(function (boton) {
-        if (window.history.length > 1) boton.hidden = false;
-        boton.addEventListener('click', function () { window.history.back(); });
-    });
-</script>
-{% endblock %}

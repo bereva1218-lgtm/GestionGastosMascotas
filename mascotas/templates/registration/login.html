@@ -4,17 +4,6 @@
 {% block titulo %}Inicia sesión{% endblock %}
 {% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/publico.css' %}">{% endblock %}
 
-{# Mismo panel que base_publico.html, pero con el titular en <p>: un <h2> antes del <h1> rompe la jerarquía de títulos. #}
-{% block panel %}
-<p class="auth__titular">Controla cada peso invertido en el cuidado de tus mascotas.</p>
-<p class="auth__bajada">Registra comida, medicamentos y juguetes, y descubre cuánto cuesta realmente cuidar a cada uno.</p>
-<ul class="auth__puntos">
-    <li><span class="icono-circulo">{% icono 'recibo' %}</span><span><strong>Gastos ordenados</strong>Por mascota, categoría y fecha, con totales automáticos.</span></li>
-    <li><span class="icono-circulo">{% icono 'pastilla' %}</span><span><strong>Tratamientos al día</strong>Dosis, frecuencia y fechas de cada medicamento.</span></li>
-    <li><span class="icono-circulo">{% icono 'grafico' %}</span><span><strong>Reportes claros</strong>Resúmenes mensuales y por categoría para decidir mejor.</span></li>
-</ul>
-{% endblock %}
-
 {% block contenido %}
 {% url 'mascotas:inicio' as url_inicio %}
 <header class="auth__encabezado">
@@ -25,16 +14,9 @@
 {% if form.non_field_errors %}
 <div class="alerta alerta--peligro" role="alert">
     {% icono 'alerta' %}
-    <div>
+    <div class="alerta__contenido">
         <strong class="alerta__titulo">No pudimos iniciar sesión</strong>
-        {% for error in form.non_field_errors.as_data %}
-            {% if error.code == 'invalid_login' %}
-            <p>Revisa tu nombre de usuario y tu contraseña. Ten en cuenta que distinguen entre mayúsculas y minúsculas.</p>
-            {% elif error.code == 'inactive' %}
-            <p>Tu cuenta está desactivada. Comunícate con el administrador para reactivarla.</p>
-            {% else %}
-            {% for mensaje in error %}<p>{{ mensaje }}</p>{% endfor %}
-            {% endif %}
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>
         {% endfor %}
     </div>
 </div>

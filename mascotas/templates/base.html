@@ -47,8 +47,12 @@
             <button type="button" class="btn btn--icono btn--fantasma barra-superior__menu" data-abrir-menu aria-controls="menu-lateral" aria-expanded="false" aria-label="Abrir menú">{% icono 'menu' %}</button>
             <nav class="migas" aria-label="Ruta de navegación">
                 <ol>
-                    <li><a href="{% url 'mascotas:inicio' %}">Inicio</a></li>
+                    {% if seccion == 'inicio' %}
+                    <li><span aria-current="page">Panel</span></li>
+                    {% else %}
+                    <li><a href="{% url 'mascotas:inicio' %}">Panel</a></li>
                     {% block migas %}{% endblock %}
+                    {% endif %}
                 </ol>
             </nav>
             <div class="barra-superior__acciones">
@@ -57,7 +61,7 @@
                     <span data-tema-icono="oscuro" hidden>{% icono 'sol' %}</span>
                 </button>
                 {% block accion_barra %}
-                <a class="btn btn--primario btn--sm" href="{% url 'mascotas:gasto_crear' %}">{% icono 'plus' 'icono--sm' %}<span class="barra-superior__texto-btn">Registrar gasto</span></a>
+                <a class="btn btn--primario btn--sm" href="{% url 'mascotas:gasto_crear' %}" aria-label="Nuevo gasto">{% icono 'plus' 'icono--sm' %}<span class="barra-superior__texto-btn">Nuevo gasto</span></a>
                 {% endblock %}
             </div>
         </header>

@@ -51,7 +51,13 @@
 
     /* --- Total en vivo: contenedor [data-calcular-total] con
            [data-cantidad], [data-valor-unitario] (inputs) y [data-total] (salida) --- */
-    var formatoPesos = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 2 });
+    /* Mismo formato que el filtro |moneda: sin decimales si el valor es entero, con dos si no. */
+    var pesosEnteros = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
+    var pesosDecimales = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function formatoPesos(valor) {
+        var redondeado = Math.round(valor * 100) / 100;
+        return '$ ' + (Number.isInteger(redondeado) ? pesosEnteros : pesosDecimales).format(redondeado);
+    }
     document.querySelectorAll('[data-calcular-total]').forEach(function (contenedor) {
         var cantidad = contenedor.querySelector('[data-cantidad] input, input[data-cantidad]');
         var valor = contenedor.querySelector('[data-valor-unitario] input, input[data-valor-unitario]');
@@ -60,7 +66,7 @@
         function actualizar() {
             var c = parseFloat(String(cantidad.value).replace(',', '.'));
             var v = parseFloat(String(valor.value).replace(',', '.'));
-            salida.textContent = (c > 0 && v > 0) ? formatoPesos.format(c * v) : '—';
+            salida.textContent = (c > 0 && v > 0) ? formatoPesos(c * v) : '—';
         }
         cantidad.addEventListener('input', actualizar);
         valor.addEventListener('input', actualizar);
@@ -75,8 +81,24 @@
         });
     });
 
-    /* --- Imprimir --- */
+    /* --- Imprimir: siempre en tema claro --- */
     document.querySelectorAll('[data-imprimir]').forEach(function (boton) {
         boton.addEventListener('click', function () { window.print(); });
+    });
+    var temaAntesDeImprimir = null;
+    window.addEventListener('beforeprint', function () {
+        temaAntesDeImprimir = raiz.dataset.theme || '';
+        raiz.dataset.theme = 'light';
+    });
+    window.addEventListener('afterprint', function () {
+        if (temaAntesDeImprimir === null) return;
+        if (temaAntesDeImprimir) raiz.dataset.theme = temaAntesDeImprimir; else delete raiz.dataset.theme;
+        temaAntesDeImprimir = null;
+    });
+
+    /* --- «Volver atrás»: solo si hay una página anterior en el historial --- */
+    document.querySelectorAll('[data-volver]').forEach(function (boton) {
+        if (window.history.length > 1) boton.hidden = false;
+        boton.addEventListener('click', function () { window.history.back(); });
     });
 })();

@@ -41,8 +41,12 @@ consistente en todas las vistas. La referencia viva es el panel de inicio
 | `{{ mascota.fecha_nacimiento\|edad }}` | `3 años`, `6 meses`, `Menos de 1 mes` o vacío. |
 | `{{ variacion\|absoluto }}` | Valor absoluto. |
 | `{{ texto\|inicial }}` | Primera letra en mayúscula (avatares). |
-| `{{ objeto\|tono }}` | `avatar--t0` … `avatar--t5`, estable por `pk`. |
+| `{{ objeto\|tono }}` · `{{ fila.mascota__id\|tono }}` | `avatar--t0` … `avatar--t5`, estable por `pk` (acepta objeto o id). |
 | `{{ categoria\|clase_categoria }}` | `cat-comida`, `cat-medicamentos`, `cat-juguetes`: colorea insignias, barras, leyendas e `icono-circulo`. |
+| `{{ categoria\|icono_categoria }}` | Icono de la categoría: `comida`, `pastilla`, `regalo` o `paquete`. Úsalo con `{% icono gasto.categoria\|icono_categoria 'icono--sm' %}`. |
+| `{{ fecha\|fecha_larga }}` | `15 de octubre de 2026` (en minúscula). Úsalo en fichas y frases en vez de `date:"j \d\e F \d\e Y"\|lower`. |
+| `{{ parte\|porcentaje:total }}` | `25 %`, `< 1 %` o `0 %` (con espacio duro). Para el texto; para el ancho de barras sigue `widthratio`. |
+| `{% insignia_medicamento m %}` | Insignia de estado de un tratamiento: Programado, Continuo, Termina hoy, Queda(n) N día(s), Finalizado. Única fuente de ese estado. |
 | `{% seccion_actual as seccion %}` | Sección de la URL (`inicio`, `mascota`, `gasto`, `medicamento`, `reportes`). |
 | `{% campo form.x %}` · `{% campo form.x prefijo='$' %}` · `{% campo form.x sufijo='kg' %}` · `{% campo form.x ancho='completo' %}` | Campo con etiqueta, asterisco de obligatorio, ayuda y errores (`.campo--error`). |
 
@@ -50,7 +54,7 @@ Iconos disponibles: `inicio huella recibo pastilla grafico torta billetera plus
 editar eliminar archivar restaurar salir buscar filtro calendario sube baja
 check alerta info cerrar menu sol luna usuario imprimir izquierda derecha abajo
 volver etiqueta reloj salud peso paquete nota comida regalo candado escudo ojo
-bandeja actividad tienda hash gota palette`.
+bandeja actividad tienda hash gota palette macho hembra`.
 
 ## Componentes (clases CSS)
 
@@ -141,6 +145,16 @@ los valores visibles.
 `.num`, `.texto-tenue`, `.texto-2`, `.texto-sm`, `.texto-xs`, `.fuerte`,
 `.truncar`, `.oculto-visual`, `.solo-pantalla`, `.solo-impresion`.
 
+## Piezas añadidas tras la revisión
+
+- **Celda de mascota:** `<span class="celda-mascota"><span class="avatar avatar--xs {{ m|tono }}{% if not m.activa %} avatar--inactivo{% endif %}" aria-hidden="true">{{ m.nombre|inicial }}</span><a class="celda-mascota__enlace" href="{{ m.get_absolute_url }}">{{ m.nombre }}</a></span>` y, si está retirada, la insignia `insignia--neutra` con punto "Retirada".
+- **Primera celda de tabla apilable:** `<td class="tabla__principal" data-label="…">` (en móvil encabeza la tarjeta, sin etiqueta).
+- **Alerta con título:** `<div class="alerta alerta--peligro" role="alert">{% icono 'alerta' %}<div class="alerta__contenido"><strong class="alerta__titulo">…</strong><p>…</p></div></div>`; resumen de errores con `.alerta__lista`.
+- **Filtros:** `form.filtros` con `.campo.filtros__busqueda` (búsqueda, ocupa 2 columnas en anchos medios) y `.filtros__acciones`; etiquetas compactas también con `.campo--compacto` fuera de `.filtros`. Chips de filtros activos: `ul.filtros-activos > li > a.insignia.insignia--borde.filtro-activo` (`__clave`, `__valor`).
+- **Paginación:** `.paginacion__numero` para cada número y `.paginacion__elipsis` para los saltos (en móvil solo anterior · actual · siguiente).
+- **Utilidades:** `.enlace-sutil`, `.fila--nowrap`, `.celda-principal__sub--una-linea`.
+- **Tokens:** `--c-sobre-peligro` para texto sobre rojo.
+
 ## Reglas
 
 1. Sin colores sueltos ni `style=""` en plantillas, salvo `--valor` de gráficos.
@@ -148,3 +162,13 @@ los valores visibles.
 3. Dinero siempre con `|moneda`; fechas en tablas `d M Y`, en fichas `j \d\e F \d\e Y`.
 4. Textos en español, en tono claro y en "tú"; mayúscula solo al inicio.
 5. Las acciones destructivas usan `btn--peligro` y pasan por la página de confirmación.
+6. Una etiqueta por acción de crear, igual al título del formulario y siempre con `{% icono 'plus' %}`:
+   **Nueva mascota**, **Nuevo gasto**, **Nuevo medicamento**.
+7. El atajo de la barra superior (`accion_barra`) solo aparece si el encabezado de la página no tiene ya esa acción.
+8. Encabezados de tarjeta: navegación con `btn--fantasma btn--sm` ("Ver todos"), crear con `btn--secundario btn--sm` + plus.
+9. Estados vacíos: título "Aún no hay …" cuando no hay datos y "Sin resultados …" cuando lo vacía un filtro;
+   botón `btn--primario` en `.vacio` y `btn--primario btn--sm` en `.vacio--compacto`.
+10. `kpi__valor--md` solo para valores de texto (p. ej. una categoría); las cifras van a tamaño completo.
+11. Conteos visibles con `|floatformat:"g"` (1.234); cantidades decimales con `|floatformat:"-2g"`.
+12. Iconos de categoría siempre con `icono_categoria`; estado de tratamientos siempre con `insignia_medicamento`.
+13. Se nombran igual en todas partes: "Panel" (inicio), "Tratamientos en curso", "Historial".

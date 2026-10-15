@@ -3,7 +3,6 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth import login
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, DecimalField, F, ProtectedError, Q, Sum, Value
@@ -15,11 +14,13 @@ from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
 from . import reportes
-from .forms import GastoFiltroForm, GastoForm, MascotaForm, MedicamentoForm, RangoFechasForm
+from .forms import GastoFiltroForm, GastoForm, MascotaForm, MedicamentoForm, RangoFechasForm, RegistroForm
 from .models import Gasto, Mascota, Medicamento
-from .reglas import total_mensual, ultimos_meses, variacion_porcentual
+from .reglas import meses_entre, total_mensual, ultimos_meses, variacion_porcentual
 
 MESES_TENDENCIA = 6
+MESES_GRAFICO_REPORTE = 12
+DIAS_POR_TERMINAR = 3
 
 
 class DelUsuarioMixin(LoginRequiredMixin):
@@ -60,6 +61,10 @@ def medicamentos_activos_del(usuario):
     )
 
 
+def promedio(total, cantidad):
+    return (total / cantidad).quantize(Decimal('0.01')) if cantidad else Decimal('0')
+
+
 def con_total_gastado(mascotas):
     return mascotas.annotate(
         total_gastado=Coalesce(Sum('gastos__valor_total'), Value(Decimal('0')), output_field=DecimalField()),
@@ -68,9 +73,14 @@ def con_total_gastado(mascotas):
 
 
 class Registro(CreateView):
-    form_class = UserCreationForm
+    form_class = RegistroForm
     template_name = 'registration/registro.html'
     success_url = reverse_lazy('mascotas:inicio')
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect(self.success_url)
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         respuesta = super().form_valid(form)
@@ -200,6 +210,13 @@ class MascotaEliminar(DelUsuarioMixin, DeleteView):
     success_url = reverse_lazy('mascotas:mascota_lista')
     extra_context = {'tipo': 'mascota'}
 
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            num_gastos=self.object.gastos.count(),
+            num_medicamentos=self.object.medicamentos.count(),
+            **kwargs,
+        )
+
     def form_valid(self, form):
         nombre = str(self.object)
         try:
@@ -207,7 +224,7 @@ class MascotaEliminar(DelUsuarioMixin, DeleteView):
         except ProtectedError:
             messages.error(
                 self.request,
-                f'No se puede eliminar «{nombre}» porque tiene gastos o medicamentos. Retírela en su lugar.',
+                f'No se puede eliminar «{nombre}» porque tiene gastos o medicamentos. Retírala en su lugar.',
             )
             return redirect('mascotas:mascota_detalle', pk=self.object.pk)
         messages.success(self.request, f'Mascota «{nombre}» eliminada.')
@@ -231,14 +248,20 @@ class GastoLista(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         total = reportes.total(self.object_list)
         cantidad = self.object_list.count()
-        return super().get_context_data(
+        filtrando = self.filtro.is_bound and any(self.request.GET.get(c) for c in self.filtro.fields)
+        contexto = super().get_context_data(
             filtro=self.filtro,
             total=total,
             cantidad=cantidad,
-            promedio=(total / cantidad).quantize(Decimal('0.01')) if cantidad else Decimal('0'),
-            filtrando=self.filtro.is_bound and any(self.request.GET.get(c) for c in self.filtro.fields),
+            promedio=promedio(total, cantidad),
+            filtrando=filtrando,
+            filtros_aplicados=filtrando and self.filtro.is_valid(),
+            tiene_mascotas=self.request.user.mascotas.exists(),
             **kwargs,
         )
+        pagina = contexto['page_obj']
+        contexto['paginas'] = pagina.paginator.get_elided_page_range(pagina.number, on_each_side=1, on_ends=1)
+        return contexto
 
 
 class GastoCrear(LoginRequiredMixin, FormConUsuarioMixin, SuccessMessageMixin, CreateView):
@@ -280,12 +303,15 @@ class MedicamentoLista(LoginRequiredMixin, ListView):
         todos = Medicamento.objects.filter(mascota__usuario=self.request.user).select_related('mascota')
         activos = medicamentos_activos_del(self.request.user)
         self.conteos = {'activos': activos.count(), 'historial': todos.count()}
+        hoy = timezone.localdate()
+        self.por_terminar = activos.filter(fecha_fin__range=(hoy, hoy + timedelta(days=DIAS_POR_TERMINAR))).count()
         self.historial = self.request.GET.get('ver') == 'historial'
         return todos if self.historial else activos.order_by(F('fecha_fin').asc(nulls_last=True), 'nombre')
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
-            historial=self.historial, conteos=self.conteos, hoy=timezone.localdate(), **kwargs
+            historial=self.historial, conteos=self.conteos, por_terminar=self.por_terminar,
+            hoy=timezone.localdate(), **kwargs
         )
 
 
@@ -331,6 +357,22 @@ def rangos_predefinidos(hoy):
     ]
 
 
+def grafico_mensual(mensual):
+    """Serie cronológica y continua (meses sin gastos en 0) a partir del resumen mensual."""
+    if not mensual:
+        return []
+    por_mes = {(m['mes'].year, m['mes'].month): m for m in mensual}
+    inicio, fin = min(m['mes'] for m in mensual), max(m['mes'] for m in mensual)
+    return [
+        {
+            'fecha': date(anio, mes, 1),
+            'total': por_mes.get((anio, mes), {}).get('total', Decimal('0')),
+            'cantidad': por_mes.get((anio, mes), {}).get('cantidad', 0),
+        }
+        for anio, mes in meses_entre(inicio, fin)
+    ]
+
+
 class Reportes(LoginRequiredMixin, TemplateView):
     template_name = 'mascotas/reportes.html'
 
@@ -348,12 +390,18 @@ class Reportes(LoginRequiredMixin, TemplateView):
             for etiqueta, inicio, fin in rangos_predefinidos(timezone.localdate())
         ]
         mensual = list(reportes.resumen_mensual(gastos))
+        grafico = grafico_mensual(mensual)[-MESES_GRAFICO_REPORTE:]
+        total, cantidad = reportes.total(gastos), gastos.count()
         return super().get_context_data(
             rango=rango,
             presets=presets,
             filtrando=bool(desde or hasta),
-            total=reportes.total(gastos),
-            cantidad=gastos.count(),
+            total=total,
+            cantidad=cantidad,
+            promedio=promedio(total, cantidad),
+            promedio_mensual=promedio(total, len(mensual)),
+            grafico_mensual=grafico,
+            max_grafico=max((g['total'] for g in grafico), default=Decimal('0')),
             por_mascota=reportes.totales_por_mascota(gastos),
             por_categoria=reportes.totales_por_categoria(gastos),
             mensual=mensual,

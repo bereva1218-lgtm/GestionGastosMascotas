@@ -1,16 +1,17 @@
-<div class="campo{% if ancho %} campo--{{ ancho }}{% endif %}{% if field.errors %} campo--error{% endif %}">
+{% load ui %}<div class="campo{% if ancho %} campo--{{ ancho }}{% endif %}{% if field.errors %} campo--error{% endif %}">
     <label class="campo__etiqueta" for="{{ field.id_for_label }}">
         {{ field.label }}{% if field.field.required %}<span class="campo__requerido" aria-hidden="true">*</span>{% endif %}
     </label>
     {% if prefijo or sufijo %}
     <div class="campo__grupo">
-        {% if prefijo %}<span class="campo__adorno">{{ prefijo }}</span>{% endif %}
+        {% if prefijo %}<span class="campo__adorno" aria-hidden="true">{{ prefijo }}</span>{% endif %}
         {{ field }}
-        {% if sufijo %}<span class="campo__adorno">{{ sufijo }}</span>{% endif %}
+        {% if sufijo %}<span class="campo__adorno" aria-hidden="true">{{ sufijo }}</span>{% endif %}
     </div>
     {% else %}
     {{ field }}
     {% endif %}
-    {% if field.help_text %}<p class="campo__ayuda" id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</p>{% endif %}
-    {% for error in field.errors %}<p class="campo__error" role="alert">{{ error }}</p>{% endfor %}
+    {# Los id coinciden con el aria-describedby que Django añade al control (…_helptext y …_error). #}
+    {% if field.help_text %}<div class="campo__ayuda" id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</div>{% endif %}
+    {% if field.errors %}<div class="campo__errores" id="{{ field.auto_id }}_error">{% for error in field.errors %}<p class="campo__error" role="alert">{% icono 'alerta' 'icono--sm' %} {{ error }}</p>{% endfor %}</div>{% endif %}
 </div>

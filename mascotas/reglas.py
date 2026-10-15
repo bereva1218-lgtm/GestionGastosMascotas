@@ -56,3 +56,10 @@ def calcular_edad(nacimiento, hoy):
     if hoy.day < nacimiento.day:
         meses -= 1
     return divmod(meses, 12)
+
+
+def meses_entre(inicio, fin):
+    """Meses de `inicio` a `fin` (ambos incluidos) como (año, mes), en orden cronológico."""
+    if fin < inicio:
+        raise ValueError('La fecha final no puede ser anterior a la inicial.')
+    return ultimos_meses(fin, (fin.year - inicio.year) * 12 + fin.month - inicio.month + 1)
