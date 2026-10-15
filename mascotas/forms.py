@@ -19,6 +19,7 @@ class MascotaForm(forms.ModelForm):
             'color', 'estado_salud', 'observaciones',
         ]
         widgets = {'fecha_nacimiento': FechaInput(), 'observaciones': forms.Textarea(attrs={'rows': 3})}
+        labels = {'fecha_nacimiento': 'Fecha de nacimiento'}
 
 
 class MascotaDelUsuarioMixin:
@@ -43,6 +44,7 @@ class GastoForm(MascotaDelUsuarioMixin, forms.ModelForm):
             'proveedor', 'notas',
         ]
         widgets = {'fecha': FechaInput(), 'notas': forms.Textarea(attrs={'rows': 3})}
+        labels = {'categoria': 'Categoría'}
         help_texts = {'valor_unitario': 'El valor total se calcula automáticamente.'}
 
 
@@ -55,6 +57,7 @@ class MedicamentoForm(MascotaDelUsuarioMixin, forms.ModelForm):
             'fecha_fin': FechaInput(),
             'observaciones': forms.Textarea(attrs={'rows': 3}),
         }
+        labels = {'fecha_inicio': 'Fecha de inicio', 'fecha_fin': 'Fecha de finalización'}
 
     def clean(self):
         datos = super().clean()
@@ -87,7 +90,7 @@ class RangoFechasForm(forms.Form):
 class GastoFiltroForm(RangoFechasForm):
     mascota = forms.ModelChoiceField(queryset=Mascota.objects.none(), required=False, empty_label='Todas')
     categoria = forms.ModelChoiceField(
-        queryset=CategoriaGasto.objects.all(), required=False, empty_label='Todas'
+        queryset=CategoriaGasto.objects.all(), required=False, empty_label='Todas', label='Categoría'
     )
 
     field_order = ['mascota', 'categoria', 'desde', 'hasta']
