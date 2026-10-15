@@ -1,12 +1,13 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db.models import ProtectedError
 from django.test import TestCase
+from django.utils import timezone
 
-from .models import CategoriaGasto, Gasto, Mascota
+from .models import CategoriaGasto, Gasto, Mascota, Medicamento
 
 
 class ReglasDeNegocioTests(TestCase):
@@ -47,3 +48,31 @@ class ReglasDeNegocioTests(TestCase):
     def test_valor_unitario_debe_ser_positivo(self):
         with self.assertRaises(IntegrityError):
             self.crear_gasto(Decimal('1'), Decimal('-5'))
+
+
+class MedicamentoEstadoTests(TestCase):
+    def setUp(self):
+        usuario = User.objects.create_user('ana')
+        self.mascota = Mascota.objects.create(usuario=usuario, nombre='Michi', sexo='H')
+        self.hoy = timezone.localdate()
+
+    def medicamento(self, fecha_fin):
+        return Medicamento(
+            mascota=self.mascota, nombre='X', dosis='1', frecuencia='D',
+            fecha_inicio=self.hoy - timedelta(days=30), fecha_fin=fecha_fin,
+        )
+
+    def test_sin_fecha_fin_esta_activo(self):
+        medicamento = self.medicamento(None)
+        self.assertTrue(medicamento.activo)
+        self.assertIsNone(medicamento.dias_restantes)
+
+    def test_termina_hoy_sigue_activo(self):
+        medicamento = self.medicamento(self.hoy)
+        self.assertTrue(medicamento.activo)
+        self.assertEqual(medicamento.dias_restantes, 0)
+
+    def test_terminado(self):
+        medicamento = self.medicamento(self.hoy - timedelta(days=1))
+        self.assertFalse(medicamento.activo)
+        self.assertEqual(medicamento.dias_restantes, -1)

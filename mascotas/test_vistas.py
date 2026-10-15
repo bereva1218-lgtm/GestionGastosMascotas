@@ -174,3 +174,97 @@ class InicioTests(VistasBase):
         self.crear_gasto(self.michi, self.comida, hoy.replace(day=1) - timedelta(days=1), '1', '9000')
         respuesta = self.client.get(reverse('mascotas:inicio'))
         self.assertEqual(respuesta.context['total_mes'], Decimal('7000'))
+
+
+class PanelTests(VistasBase):
+    def test_compara_con_el_mes_anterior(self):
+        hoy = timezone.localdate()
+        self.crear_gasto(self.michi, self.comida, hoy, '1', '7000')
+        self.crear_gasto(self.michi, self.comida, hoy.replace(day=1) - timedelta(days=1), '1', '9000')
+        contexto = self.client.get(reverse('mascotas:inicio')).context
+        self.assertEqual(contexto['total_mes_anterior'], Decimal('9000'))
+        self.assertEqual(contexto['variacion'], Decimal('-22.2'))
+
+    def test_tendencia_de_seis_meses_termina_en_el_mes_actual(self):
+        hoy = timezone.localdate()
+        self.crear_gasto(self.michi, self.comida, hoy, '1', '7000')
+        tendencia = self.client.get(reverse('mascotas:inicio')).context['tendencia']
+        self.assertEqual(len(tendencia), 6)
+        self.assertEqual(tendencia[-1]['total'], Decimal('7000'))
+        self.assertEqual(tendencia[-1]['fecha'], hoy.replace(day=1))
+
+    def test_medicamentos_activos_solo_del_usuario(self):
+        hoy = timezone.localdate()
+        Medicamento.objects.create(mascota=self.michi, nombre='Propio', dosis='1', frecuencia='D', fecha_inicio=hoy)
+        Medicamento.objects.create(mascota=self.luna, nombre='Ajeno', dosis='1', frecuencia='D', fecha_inicio=hoy)
+        activos = self.client.get(reverse('mascotas:inicio')).context['medicamentos_activos']
+        self.assertEqual([m.nombre for m in activos], ['Propio'])
+
+
+class MascotaListaTests(VistasBase):
+    def setUp(self):
+        super().setUp()
+        self.tom = Mascota.objects.create(usuario=self.ana, nombre='Tom', sexo='M', activa=False)
+        self.crear_gasto(self.michi, self.comida, date(2026, 10, 1), '2', '1500')
+
+    def test_anota_total_gastado(self):
+        mascotas = {m.nombre: m for m in self.client.get(reverse('mascotas:mascota_lista')).context['mascotas']}
+        self.assertEqual(mascotas['Michi'].total_gastado, Decimal('3000'))
+        self.assertEqual(mascotas['Tom'].total_gastado, Decimal('0'))
+
+    def test_busqueda_por_nombre(self):
+        respuesta = self.client.get(reverse('mascotas:mascota_lista'), {'q': 'mic'})
+        self.assertEqual([m.nombre for m in respuesta.context['mascotas']], ['Michi'])
+
+    def test_filtro_por_estado(self):
+        respuesta = self.client.get(reverse('mascotas:mascota_lista'), {'estado': 'retiradas'})
+        self.assertEqual([m.nombre for m in respuesta.context['mascotas']], ['Tom'])
+        self.assertEqual(respuesta.context['conteos'], {'todas': 2, 'activas': 1, 'retiradas': 1})
+
+
+class MascotaDetalleExtraTests(VistasBase):
+    def test_total_del_mes_de_la_mascota(self):
+        hoy = timezone.localdate()
+        self.crear_gasto(self.michi, self.comida, hoy, '1', '4000')
+        self.crear_gasto(self.michi, self.comida, hoy.replace(day=1) - timedelta(days=1), '1', '9000')
+        contexto = self.client.get(reverse('mascotas:mascota_detalle', args=[self.michi.pk])).context
+        self.assertEqual(contexto['total_mes'], Decimal('4000'))
+
+
+class GastoListaExtraTests(VistasBase):
+    def test_pagina_de_quince_y_total_de_todo_el_filtro(self):
+        for dia in range(1, 21):
+            self.crear_gasto(self.michi, self.comida, date(2026, 10, dia), '1', '100')
+        primera = self.client.get(reverse('mascotas:gasto_lista'))
+        self.assertEqual(len(primera.context['gastos']), 15)
+        self.assertEqual(primera.context['total'], Decimal('2000'))
+        self.assertEqual(primera.context['cantidad'], 20)
+        self.assertEqual(primera.context['promedio'], Decimal('100'))
+        segunda = self.client.get(reverse('mascotas:gasto_lista'), {'page': 2})
+        self.assertEqual(len(segunda.context['gastos']), 5)
+
+    def test_busqueda_por_producto_o_proveedor(self):
+        self.crear_gasto(self.michi, self.comida, date(2026, 10, 1), producto='Arena sanitaria')
+        self.crear_gasto(self.michi, self.comida, date(2026, 10, 2), producto='Concentrado')
+        respuesta = self.client.get(reverse('mascotas:gasto_lista'), {'q': 'arena'})
+        self.assertEqual([g.producto for g in respuesta.context['gastos']], ['Arena sanitaria'])
+
+    def test_sin_gastos_el_promedio_es_cero(self):
+        self.assertEqual(self.client.get(reverse('mascotas:gasto_lista')).context['promedio'], Decimal('0'))
+
+
+class ReportesPresetsTests(VistasBase):
+    def test_ofrece_rangos_predefinidos(self):
+        hoy = timezone.localdate()
+        presets = self.client.get(reverse('mascotas:reportes')).context['presets']
+        este_mes = next(p for p in presets if p['etiqueta'] == 'Este mes')
+        self.assertEqual(este_mes['desde'], hoy.replace(day=1).isoformat())
+        self.assertEqual(este_mes['hasta'], hoy.isoformat())
+
+    def test_marca_el_rango_activo(self):
+        hoy = timezone.localdate()
+        respuesta = self.client.get(reverse('mascotas:reportes'), {
+            'desde': hoy.replace(day=1).isoformat(), 'hasta': hoy.isoformat(),
+        })
+        activos = [p['etiqueta'] for p in respuesta.context['presets'] if p['activo']]
+        self.assertEqual(activos, ['Este mes'])
