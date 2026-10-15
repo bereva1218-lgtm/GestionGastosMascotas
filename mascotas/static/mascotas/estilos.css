@@ -525,8 +525,8 @@ a.celda-principal__titulo:hover { color: var(--c-primario); }
 .campo__errores { display: flex; flex-direction: column; gap: 2px; }
 .campo__error { display: flex; align-items: center; gap: 4px; font-size: var(--t-xs); font-weight: 500; color: var(--c-peligro); }
 
-.campo input:not([type="checkbox"]):not([type="radio"]),
-.campo select, .campo textarea,
+/* :where() deja la especificidad en una clase, para que :hover, :focus y el estado de error la superen. */
+.campo :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
 .control {
     width: 100%; min-height: 42px; padding: 9px 12px;
     background: var(--c-superficie); color: var(--c-texto);
@@ -545,7 +545,9 @@ a.celda-principal__titulo:hover { color: var(--c-primario); }
 .campo input:focus, .campo select:focus, .campo textarea:focus, .control:focus {
     outline: none; border-color: var(--c-primario); box-shadow: var(--anillo);
 }
-.campo--error input, .campo--error select, .campo--error textarea { border-color: var(--c-peligro); }
+.campo--error :is(input, select, textarea),
+.campo--error :is(input, select, textarea):hover,
+.campo--error :is(input, select, textarea):focus { border-color: var(--c-peligro); }
 .campo--error input:focus, .campo--error select:focus, .campo--error textarea:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-peligro) 22%, transparent); }
 .campo input[type="date"] { cursor: text; }
 

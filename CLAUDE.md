@@ -38,7 +38,9 @@ Project package: `gestion_gastos_mascotas/` (settings, root `urls.py` → `admin
 - `reportes.py` — aggregations over an already user-scoped `Gasto` queryset.
 - `views.py` — CBVs; `DelUsuarioMixin` = login required + `get_queryset` filtered by `campo_usuario` (`usuario` or `mascota__usuario`), so foreign records 404. `FormConUsuarioMixin` passes `usuario` to forms.
 - `forms.py` — `GastoForm`/`MedicamentoForm` take `usuario=` and limit `mascota` to the user's active pets.
-- Templates in `mascotas/templates/` (`base.html` renders `messages`); CSS in `mascotas/static/mascotas/`.
+- Templates in `mascotas/templates/` (`base.html` = app shell with sidebar, `base_publico.html` = login/registro, `includes/` = icon sprite, form field, messages). Design system and UI rules: `Context/DisenoUI.md` — read it before touching templates. All colors come from tokens in `mascotas/static/mascotas/estilos.css` (light/dark); page-specific CSS goes in `static/mascotas/css/<pagina>.css`, tokens only.
+- `templatetags/ui.py` (`{% load ui %}`) — `icono`, `moneda`, `fecha_larga`, `porcentaje`, `icono_categoria`, `insignia_medicamento`, `campo` (form field), etc. Use them instead of re-implementing formatting in templates.
+- `test_ui.py` smoke-tests every page; `test_integracion_ui.py` covers the presentation-facing context and filters.
 
 Entities (`Context/Aplicacion.md`):
 
