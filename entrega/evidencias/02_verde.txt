@@ -1,0 +1,13 @@
+test_incluye_primer_y_ultimo_dia_y_excluye_mes_vecino (mascotas.test_reglas.TotalMensualTests.test_incluye_primer_y_ultimo_dia_y_excluye_mes_vecino) ... ok
+test_mes_fuera_de_rango_es_invalido (mascotas.test_reglas.TotalMensualTests.test_mes_fuera_de_rango_es_invalido) ... ok
+test_mismo_mes_de_otro_anio_no_se_suma (mascotas.test_reglas.TotalMensualTests.test_mismo_mes_de_otro_anio_no_se_suma) ... ok
+test_sin_gastos_el_total_es_cero (mascotas.test_reglas.TotalMensualTests.test_sin_gastos_el_total_es_cero) ... ok
+test_suma_solo_los_gastos_del_mes_pedido (mascotas.test_reglas.TotalMensualTests.test_suma_solo_los_gastos_del_mes_pedido) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.003s
+
+OK
+Found 5 test(s).
+Skipping setup of unused database(s): default.
+System check identified no issues (0 silenced).
