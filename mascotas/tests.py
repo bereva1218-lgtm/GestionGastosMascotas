@@ -39,3 +39,11 @@ class ReglasDeNegocioTests(TestCase):
         self.crear_gasto(Decimal('1'), Decimal('100'))
         with self.assertRaises(ProtectedError):
             self.mascota.delete()
+
+    def test_borrar_usuario_con_mascotas_esta_protegido(self):
+        with self.assertRaises(ProtectedError):
+            self.mascota.usuario.delete()
+
+    def test_valor_unitario_debe_ser_positivo(self):
+        with self.assertRaises(IntegrityError):
+            self.crear_gasto(Decimal('1'), Decimal('-5'))

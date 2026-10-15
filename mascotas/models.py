@@ -16,7 +16,7 @@ class Mascota(models.Model):
         HEMBRA = 'H', 'Hembra'
 
     usuario = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mascotas'
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='mascotas'
     )
     nombre = models.CharField(max_length=100)
     especie = models.CharField(max_length=50, default='Gato')
