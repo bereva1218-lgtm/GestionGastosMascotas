@@ -126,9 +126,11 @@ def seccion_actual(context):
 
 
 @register.inclusion_tag('includes/campo.html')
-def campo(field, prefijo='', sufijo='', ancho=''):
+def campo(field, prefijo='', sufijo='', ancho='', error=False):
     """Campo de formulario con etiqueta, ayuda y errores.
 
     {% campo form.valor_unitario prefijo='$' %} · {% campo form.notas ancho='completo' %}
+    `error` marca el campo aunque el error sea del formulario (p. ej. un rango de fechas invertido):
+    {% campo rango.desde error=rango.non_field_errors %}
     """
-    return {'field': field, 'prefijo': prefijo, 'sufijo': sufijo, 'ancho': ancho}
+    return {'field': field, 'prefijo': prefijo, 'sufijo': sufijo, 'ancho': ancho, 'error': bool(error)}

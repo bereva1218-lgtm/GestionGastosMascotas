@@ -23,10 +23,10 @@
             <p>Corrige los datos de esta compra. El total se vuelve a calcular al guardar.</p>
             {% with ini=form.initial %}
             <div class="registro-actual celda-principal">
-                {% for categoria in form.fields.categoria.queryset %}{% if categoria.pk == ini.categoria %}<span class="icono-circulo {{ categoria|clase_categoria }}">{% icono 'paquete' 'icono--sm' %}</span>{% endif %}{% endfor %}
+                {% for categoria in form.fields.categoria.queryset %}{% if categoria.pk == ini.categoria %}<span class="icono-circulo {{ categoria|clase_categoria }}">{% icono categoria|icono_categoria 'icono--sm' %}</span>{% endif %}{% endfor %}
                 <span class="celda-principal__texto">
                     <span class="celda-principal__titulo truncar">{{ ini.producto }}</span>
-                    <span class="celda-principal__sub truncar">{% for mascota in form.fields.mascota.queryset %}{% if mascota.pk == ini.mascota %}{{ mascota }} · {% endif %}{% endfor %}{% for categoria in form.fields.categoria.queryset %}{% if categoria.pk == ini.categoria %}{{ categoria }} · {% endif %}{% endfor %}{{ ini.fecha|date:"j \d\e F \d\e Y"|lower }}</span>
+                    <span class="celda-principal__sub truncar">{% for mascota in form.fields.mascota.queryset %}{% if mascota.pk == ini.mascota %}{{ mascota }} · {% endif %}{% endfor %}{% for categoria in form.fields.categoria.queryset %}{% if categoria.pk == ini.categoria %}{{ categoria }} · {% endif %}{% endfor %}{{ ini.fecha|fecha_larga }}</span>
                 </span>
                 {# valor_total no es editable: object conserva el total guardado. #}
                 <span class="registro-actual__extremo fuerte">{{ object.valor_total|moneda }}</span>
@@ -59,13 +59,19 @@
         {% endif %}
 
         {% if not form.fields.mascota.queryset.exists %}
-        <div class="alerta alerta--aviso">
+        {% with tiene_retiradas=user.mascotas.exists %}
+        <div class="alerta alerta--aviso" role="status">
             {% icono 'alerta' %}
             <div class="alerta__contenido">
                 <strong class="alerta__titulo">Primero necesitas una mascota activa</strong>
-                <p>Cada gasto pertenece a una mascota activa. <a href="{% url 'mascotas:mascota_crear' %}">Registra una mascota</a> o <a href="{% url 'mascotas:mascota_lista' %}?estado=retiradas">reactiva una retirada</a> y vuelve para anotar la compra.</p>
+                <p>Cada gasto pertenece a una mascota activa. {% if tiene_retiradas %}Reactiva una de tus mascotas retiradas o crea una nueva{% else %}Crea tu primera mascota{% endif %} y vuelve para anotar la compra.</p>
+                <div class="fila fila--sm alerta__acciones">
+                    <a class="btn btn--primario btn--sm" href="{% url 'mascotas:mascota_crear' %}">{% icono 'plus' 'icono--sm' %} Nueva mascota</a>
+                    {% if tiene_retiradas %}<a class="btn btn--secundario btn--sm" href="{% url 'mascotas:mascota_lista' %}?estado=retiradas">{% icono 'restaurar' 'icono--sm' %} Ver retiradas</a>{% endif %}
+                </div>
             </div>
         </div>
+        {% endwith %}
         {% endif %}
 
         <section class="formulario__seccion" aria-labelledby="seccion-compra">

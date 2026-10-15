@@ -1,4 +1,4 @@
-{% load ui %}<div class="campo{% if ancho %} campo--{{ ancho }}{% endif %}{% if field.errors %} campo--error{% endif %}">
+{% load ui %}<div class="campo{% if ancho %} campo--{{ ancho }}{% endif %}{% if field.errors or error %} campo--error{% endif %}">
     <label class="campo__etiqueta" for="{{ field.id_for_label }}">
         {{ field.label }}{% if field.field.required %}<span class="campo__requerido" aria-hidden="true">*</span>{% endif %}
     </label>

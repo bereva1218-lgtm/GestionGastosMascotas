@@ -4,6 +4,8 @@
 {% block titulo %}Reportes{% endblock %}
 {% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/reportes.css' %}">{% endblock %}
 {% block migas %}<li><span aria-current="page">Reportes</span></li>{% endblock %}
+{# Sin datos, el estado vacío ya ofrece "Nuevo gasto": se oculta el atajo de la barra. #}
+{% block accion_barra %}{% if cantidad or filtrando and rango.is_valid %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block contenido %}
 {% with valido=rango.is_valid d=rango.cleaned_data.desde h=rango.cleaned_data.hasta %}
@@ -11,9 +13,9 @@
 <div class="solo-impresion reporte-impreso">
     <p class="reporte-impreso__marca">Gastos de Mascotas · Reporte de gastos</p>
     <p class="reporte-impreso__meta">
-        Periodo: {% if filtrando and valido and d and h %}del {{ d|date:"j \d\e F \d\e Y"|lower }} al {{ h|date:"j \d\e F \d\e Y"|lower }}{% elif filtrando and valido and d %}desde el {{ d|date:"j \d\e F \d\e Y"|lower }}{% elif filtrando and valido and h %}hasta el {{ h|date:"j \d\e F \d\e Y"|lower }}{% else %}todo el historial{% endif %}
-        · {{ cantidad }} gasto{{ cantidad|pluralize }}
-        · Generado el {% now "j \d\e F \d\e Y" as generado %}{{ generado|lower }} por {{ user.get_full_name|default:user.username }}
+        Periodo: {% if filtrando and valido and d and h %}del {{ d|fecha_larga }} al {{ h|fecha_larga }}{% elif filtrando and valido and d %}desde el {{ d|fecha_larga }}{% elif filtrando and valido and h %}hasta el {{ h|fecha_larga }}{% else %}todo el historial{% endif %}
+        · {{ cantidad|floatformat:"g" }} gasto{{ cantidad|pluralize }}
+        · Generado el {{ hoy|fecha_larga }} por {{ user.get_full_name|default:user.username }}
     </p>
 </div>
 
@@ -25,7 +27,7 @@
     </div>
     <div class="pagina-encabezado__acciones">
         <a class="btn btn--secundario" href="{% url 'mascotas:gasto_lista' %}{% if filtrando and valido %}?desde={{ d|date:'Y-m-d' }}&amp;hasta={{ h|date:'Y-m-d' }}{% endif %}">{% icono 'recibo' %} Ver gastos</a>
-        <button type="button" class="btn btn--secundario" data-imprimir>{% icono 'imprimir' %} Imprimir</button>
+        {% if cantidad %}<button type="button" class="btn btn--secundario" data-imprimir>{% icono 'imprimir' %} Imprimir</button>{% endif %}
     </div>
 </header>
 
@@ -42,13 +44,13 @@
                 </nav>
                 <p class="reporte-periodo__texto">
                     {% icono 'calendario' 'icono--sm' %}
-                    <span>Mostrando <strong>{% if filtrando and valido and d and h %}del {{ d|date:"j \d\e F \d\e Y"|lower }} al {{ h|date:"j \d\e F \d\e Y"|lower }}{% elif filtrando and valido and d %}desde el {{ d|date:"j \d\e F \d\e Y"|lower }}{% elif filtrando and valido and h %}hasta el {{ h|date:"j \d\e F \d\e Y"|lower }}{% else %}todo el historial{% endif %}</strong> · {{ cantidad }} gasto{{ cantidad|pluralize }}</span>
+                    <span>Mostrando <strong>{% if filtrando and valido and d and h %}del {{ d|fecha_larga }} al {{ h|fecha_larga }}{% elif filtrando and valido and d %}desde el {{ d|fecha_larga }}{% elif filtrando and valido and h %}hasta el {{ h|fecha_larga }}{% else %}todo el historial{% endif %}</strong> · {{ cantidad|floatformat:"g" }} gasto{{ cantidad|pluralize }}</span>
                 </p>
             </div>
             <form method="get" class="reporte-rango" aria-label="Rango de fechas personalizado">
-                {% campo rango.desde %}
-                {% campo rango.hasta %}
-                <button type="submit" class="btn btn--primario">{% icono 'filtro' 'icono--sm' %} Aplicar</button>
+                {% campo rango.desde ancho='compacto' error=rango.non_field_errors %}
+                {% campo rango.hasta ancho='compacto' error=rango.non_field_errors %}
+                <button type="submit" class="btn btn--primario">{% icono 'filtro' %} Filtrar</button>
             </form>
         </div>
         {% if rango.errors %}
@@ -64,9 +66,6 @@
 </section>
 
 {% if cantidad %}
-{% widthratio total mensual|length 1 as promedio_mensual %}
-{% widthratio total cantidad 1 as promedio_gasto %}
-
 <section class="kpis" aria-label="Indicadores del periodo">
     <article class="kpi">
         <div class="kpi__cabeza">
@@ -74,15 +73,15 @@
             <span class="kpi__icono">{% icono 'billetera' %}</span>
         </div>
         <span class="kpi__valor">{{ total|moneda }}</span>
-        <span class="kpi__meta">{{ por_mascota|length }} mascota{{ por_mascota|length|pluralize }} con gastos</span>
+        <span class="kpi__meta">{{ por_mascota|length|floatformat:"g" }} mascota{{ por_mascota|length|pluralize }} con gastos</span>
     </article>
     <article class="kpi">
         <div class="kpi__cabeza">
             <span class="kpi__etiqueta">Gastos registrados</span>
             <span class="kpi__icono kpi__icono--info">{% icono 'recibo' %}</span>
         </div>
-        <span class="kpi__valor">{{ cantidad }}</span>
-        <span class="kpi__meta">Promedio de {{ promedio_gasto|moneda }} por gasto</span>
+        <span class="kpi__valor">{{ cantidad|floatformat:"g" }}</span>
+        <span class="kpi__meta">Promedio de {{ promedio|moneda }} por gasto</span>
     </article>
     <article class="kpi">
         <div class="kpi__cabeza">
@@ -90,19 +89,17 @@
             <span class="kpi__icono kpi__icono--juguetes">{% icono 'actividad' %}</span>
         </div>
         <span class="kpi__valor">{{ promedio_mensual|moneda }}</span>
-        <span class="kpi__meta">Sobre {{ mensual|length }} mes{{ mensual|length|pluralize:"es" }} con gastos</span>
+        <span class="kpi__meta">Sobre {{ mensual|length|floatformat:"g" }} mes{{ mensual|length|pluralize:"es" }} con gastos</span>
     </article>
     {% with principal=por_categoria.0 %}
     <article class="kpi">
         <div class="kpi__cabeza">
             <span class="kpi__etiqueta">Categoría principal</span>
-            <span class="kpi__icono {{ principal.categoria__nombre|clase_categoria }}">
-                {% if principal.categoria__nombre == 'Comida' %}{% icono 'comida' %}{% elif principal.categoria__nombre == 'Medicamentos' %}{% icono 'pastilla' %}{% elif principal.categoria__nombre == 'Juguetes' %}{% icono 'regalo' %}{% else %}{% icono 'etiqueta' %}{% endif %}
-            </span>
+            <span class="kpi__icono {{ principal.categoria__nombre|clase_categoria }}">{% icono principal.categoria__nombre|icono_categoria %}</span>
         </div>
         <span class="kpi__valor kpi__valor--md reporte-kpi-texto">{{ principal.categoria__nombre }}</span>
         <span class="kpi__meta">
-            <span class="insignia {{ principal.categoria__nombre|clase_categoria }}">{% widthratio principal.total total 100 %} %</span>
+            <span class="insignia {{ principal.categoria__nombre|clase_categoria }}">{{ principal.total|porcentaje:total }}</span>
             del total · {{ principal.total|moneda }}
         </span>
     </article>
@@ -122,11 +119,12 @@
                 {% for fila in por_mascota %}
                 <li>
                     <div class="barras__cabeza">
-                        <span class="barras__nombre">
-                            <span class="avatar avatar--xs" aria-hidden="true">{{ fila.mascota__nombre|inicial }}</span>
-                            <span class="truncar">{{ fila.mascota__nombre }}</span>
+                        <span class="barras__nombre celda-mascota">
+                            <span class="avatar avatar--xs {{ fila.mascota__id|tono }}{% if not fila.mascota__activa %} avatar--inactivo{% endif %}" aria-hidden="true">{{ fila.mascota__nombre|inicial }}</span>
+                            <a class="celda-mascota__enlace" href="{% url 'mascotas:mascota_detalle' fila.mascota__id %}" title="{{ fila.mascota__nombre }}">{{ fila.mascota__nombre }}</a>
+                            {% if not fila.mascota__activa %}<span class="insignia insignia--neutra"><span class="insignia__punto"></span>Retirada</span>{% endif %}
                         </span>
-                        <span class="barras__valor">{{ fila.total|moneda }}<span class="barras__porcentaje">{% widthratio fila.total total 100 %} %</span></span>
+                        <span class="barras__valor">{{ fila.total|moneda }}<span class="barras__porcentaje">{{ fila.total|porcentaje:total }}</span></span>
                     </div>
                     <div class="barras__pista" aria-hidden="true"><div class="barras__relleno" style="--valor: {% widthratio fila.total total 100 %}%"></div></div>
                 </li>
@@ -152,7 +150,7 @@
                     <li class="leyenda__fila {{ fila.categoria__nombre|clase_categoria }}">
                         <span class="leyenda__punto"></span>
                         <span>{{ fila.categoria__nombre }}</span>
-                        <span class="texto-tenue texto-xs">{% widthratio fila.total total 100 %} %</span>
+                        <span class="texto-tenue texto-xs">{{ fila.total|porcentaje:total }}</span>
                         <span class="leyenda__valor">{{ fila.total|moneda }}</span>
                     </li>
                     {% endfor %}
@@ -166,20 +164,22 @@
     <header class="tarjeta__encabezado">
         <div>
             <h2 class="tarjeta__titulo" id="titulo-mensual">{% icono 'actividad' %} Evolución mensual</h2>
-            <p class="tarjeta__subtitulo">{% if mensual|length > 12 %}El gráfico muestra los últimos 12 meses con gastos; la tabla, todos{% else %}Meses del periodo con gastos registrados{% endif %}</p>
+            {% with primero=mensual|last %}
+            <p class="tarjeta__subtitulo">{% if primero.mes < grafico_mensual.0.fecha %}El gráfico muestra los últimos 12 meses; la tabla, todos los meses con gastos{% else %}Gasto de cada mes del periodo; la tabla detalla los meses con gastos{% endif %}</p>
+            {% endwith %}
         </div>
     </header>
     <div class="reporte-evolucion">
         <div class="reporte-evolucion__grafico">
             <div class="grafico-columnas" role="img" aria-label="Gráfico de columnas del gasto por mes. Los valores están en la tabla Detalle por mes.">
-                {% for m in mensual|slice:":12" reversed %}
-                <div class="grafico-columnas__item{% if m.total == max_mensual %} grafico-columnas__item--actual{% endif %}">
+                {% for g in grafico_mensual %}
+                <div class="grafico-columnas__item{% if g.total == max_grafico %} grafico-columnas__item--actual{% elif not g.cantidad %} grafico-columnas__item--tenue{% endif %}">
                     <div class="grafico-columnas__pista">
-                        <div class="grafico-columnas__barra" style="--valor: {% widthratio m.total max_mensual 100 %}%">
-                            <span class="grafico-columnas__valor">{{ m.total|moneda }}</span>
+                        <div class="grafico-columnas__barra" style="--valor: {% widthratio g.total max_grafico 100 %}%">
+                            <span class="grafico-columnas__valor">{{ g.total|moneda }}</span>
                         </div>
                     </div>
-                    <span class="grafico-columnas__etiqueta">{{ m.mes|date:"M y" }}</span>
+                    <span class="grafico-columnas__etiqueta">{{ g.fecha|date:"M y" }}</span>
                 </div>
                 {% endfor %}
             </div>
@@ -193,16 +193,16 @@
                 <tbody>
                     {% for m in mensual %}
                     <tr{% if m.total == max_mensual %} class="fila--pico"{% endif %}>
-                        <td data-label="Mes">{{ m.mes|date:"F Y"|capfirst }}</td>
-                        <td data-label="N.º de gastos" class="num texto-2">{{ m.cantidad }}</td>
+                        <td class="tabla__principal" data-label="Mes">{{ m.mes|date:"F Y"|capfirst }}</td>
+                        <td data-label="N.º de gastos" class="num texto-2">{{ m.cantidad|floatformat:"g" }}</td>
                         <td data-label="Total" class="num fuerte">{{ m.total|moneda }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td>Total</td>
-                        <td data-label="N.º de gastos" class="num">{{ cantidad }}</td>
+                        <td class="tabla__principal">Total</td>
+                        <td data-label="N.º de gastos" class="num">{{ cantidad|floatformat:"g" }}</td>
                         <td data-label="Total" class="num">{{ total|moneda }}</td>
                     </tr>
                 </tfoot>
@@ -221,7 +221,7 @@
     <header class="tarjeta__encabezado">
         <div>
             <h2 class="tarjeta__titulo" id="titulo-productos">{% icono 'paquete' %} Productos registrados</h2>
-            <p class="tarjeta__subtitulo">{{ productos|length }} producto{{ productos|length|pluralize }} distinto{{ productos|length|pluralize }} en el periodo</p>
+            <p class="tarjeta__subtitulo">{{ productos|length|floatformat:"g" }} producto{{ productos|length|pluralize }} distinto{{ productos|length|pluralize }} en el periodo</p>
         </div>
     </header>
     <div class="tabla-contenedor">
@@ -239,19 +239,19 @@
             <tbody>
                 {% for fila in productos %}
                 <tr>
-                    <td data-label="Producto">
+                    <td class="tabla__principal" data-label="Producto">
                         <div class="celda-principal">
-                            <span class="icono-circulo {{ fila.categoria__nombre|clase_categoria }}">{% icono 'paquete' 'icono--sm' %}</span>
+                            <span class="icono-circulo {{ fila.categoria__nombre|clase_categoria }}">{% icono fila.categoria__nombre|icono_categoria 'icono--sm' %}</span>
                             <span class="celda-principal__texto"><span class="celda-principal__titulo">{{ fila.producto }}</span></span>
                         </div>
                     </td>
                     <td data-label="Categoría"><span class="insignia {{ fila.categoria__nombre|clase_categoria }}">{{ fila.categoria__nombre }}</span></td>
-                    <td data-label="Veces" class="num texto-2">{{ fila.veces }}</td>
+                    <td data-label="Veces" class="num texto-2">{{ fila.veces|floatformat:"g" }}</td>
                     <td data-label="Total" class="num fuerte">{{ fila.total|moneda }}</td>
                     <td data-label="Participación" class="num">
                         <span class="reporte-participacion">
                             <span class="barras__pista" aria-hidden="true"><span class="barras__relleno {{ fila.categoria__nombre|clase_categoria }}" style="--valor: {% widthratio fila.total total 100 %}%"></span></span>
-                            <span class="reporte-participacion__valor">{% widthratio fila.total total 100 %} %</span>
+                            <span class="reporte-participacion__valor">{{ fila.total|porcentaje:total }}</span>
                         </span>
                     </td>
                 </tr>
@@ -259,10 +259,10 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="2">Total del periodo</td>
-                    <td data-label="Veces" class="num">{{ cantidad }}</td>
+                    <td class="tabla__principal" colspan="2">Total del periodo</td>
+                    <td data-label="Veces" class="num">{{ cantidad|floatformat:"g" }}</td>
                     <td data-label="Total" class="num">{{ total|moneda }}</td>
-                    <td data-label="Participación" class="num">100 %</td>
+                    <td data-label="Participación" class="num">{{ total|porcentaje:total }}</td>
                 </tr>
             </tfoot>
         </table>
@@ -275,16 +275,20 @@
     {% if filtrando and valido %}
     <div class="vacio">
         <span class="vacio__icono">{% icono 'calendario' 'icono--lg' %}</span>
-        <h2 class="vacio__titulo" id="titulo-vacio">No hay gastos en este periodo</h2>
+        <h2 class="vacio__titulo" id="titulo-vacio">Sin resultados en este periodo</h2>
         <p class="vacio__texto">No encontramos gastos registrados en el rango elegido. Prueba con otro periodo o consulta todo el historial.</p>
-        <a class="btn btn--secundario" href="{% url 'mascotas:reportes' %}">{% icono 'restaurar' %} Ver todo el historial</a>
+        <a class="btn btn--primario" href="{% url 'mascotas:reportes' %}">{% icono 'restaurar' %} Ver todo el historial</a>
     </div>
     {% else %}
     <div class="vacio">
         <span class="vacio__icono">{% icono 'grafico' 'icono--lg' %}</span>
         <h2 class="vacio__titulo" id="titulo-vacio">Aún no hay datos para tus reportes</h2>
-        <p class="vacio__texto">Cuando registres gastos verás aquí los totales por mascota, por categoría y por mes.</p>
-        <a class="btn btn--primario" href="{% url 'mascotas:gasto_crear' %}">{% icono 'plus' %} Registrar gasto</a>
+        <p class="vacio__texto">Cuando registres gastos verás aquí los totales por mascota, por categoría y por mes.{% if not tiene_mascotas %} Cada gasto pertenece a una mascota: registra una primero.{% endif %}</p>
+        {% if tiene_mascotas %}
+        <a class="btn btn--primario" href="{% url 'mascotas:gasto_crear' %}">{% icono 'plus' %} Nuevo gasto</a>
+        {% else %}
+        <a class="btn btn--primario" href="{% url 'mascotas:mascota_crear' %}">{% icono 'plus' %} Nueva mascota</a>
+        {% endif %}
     </div>
     {% endif %}
 </section>

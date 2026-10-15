@@ -1,9 +1,7 @@
 {% extends 'base.html' %}
-{% load static ui %}
+{% load ui %}
 
-{% block titulo %}{% if historial %}Historial de medicamentos{% else %}Medicamentos{% endif %}{% endblock %}
-
-{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/medicamentos.css' %}">{% endblock %}
+{% block titulo %}Medicamentos{% if historial %} · Historial{% endif %}{% endblock %}
 
 {% block migas %}
 {% if historial %}
@@ -29,37 +27,49 @@
     </div>
 </header>
 
-<div class="barra-herramientas">
-    <nav class="segmento solo-pantalla" aria-label="Vista de tratamientos">
-        <a href="{% url 'mascotas:medicamento_lista' %}"{% if not historial %} aria-current="page"{% endif %}>
-            {% icono 'actividad' 'icono--sm' %} En curso
-            <span class="segmento__conteo">{{ conteos.activos }}</span>
-        </a>
-        <a href="{% url 'mascotas:medicamento_lista' %}?ver=historial"{% if historial %} aria-current="page"{% endif %}>
-            {% icono 'reloj' 'icono--sm' %} Historial completo
-            <span class="segmento__conteo">{{ conteos.historial }}</span>
-        </a>
-    </nav>
-    <p class="fila fila--sm texto-sm texto-tenue">{% icono 'calendario' 'icono--sm' %} Estado al {{ hoy|date:"j \d\e F \d\e Y"|lower }}</p>
+{% if conteos.historial %}
+<div class="pila">
+    {% if por_terminar and not historial %}
+    <div class="alerta alerta--aviso" role="status">
+        {% icono 'alerta' %}
+        <div class="alerta__contenido">
+            <strong class="alerta__titulo">{{ por_terminar|floatformat:"g" }} tratamiento{{ por_terminar|pluralize }} termina{{ por_terminar|pluralize:"n" }} en los próximos 3 días</strong>
+            <p>{% if por_terminar == 1 %}Aparece primero en la lista. Si debe continuar{% else %}Aparecen primero en la lista. Si alguno debe continuar{% endif %}, edita su fecha de finalización para que siga en curso.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="barra-herramientas">
+        <nav class="segmento solo-pantalla" aria-label="Vista de tratamientos">
+            <a href="{% url 'mascotas:medicamento_lista' %}"{% if not historial %} aria-current="page"{% endif %}>
+                {% icono 'actividad' 'icono--sm' %} En curso
+                <span class="segmento__conteo">{{ conteos.activos|floatformat:"g" }}</span>
+            </a>
+            <a href="{% url 'mascotas:medicamento_lista' %}?ver=historial"{% if historial %} aria-current="page"{% endif %}>
+                {% icono 'reloj' 'icono--sm' %} Historial
+                <span class="segmento__conteo">{{ conteos.historial|floatformat:"g" }}</span>
+            </a>
+        </nav>
+        <p class="fila fila--sm texto-sm texto-tenue">{% icono 'calendario' 'icono--sm' %} Estado al {{ hoy|fecha_larga }}</p>
+    </div>
 </div>
+{% endif %}
 
 <section class="tarjeta" aria-labelledby="titulo-tratamientos">
-    <header class="tarjeta__encabezado">
-        <div>
-            <h2 class="tarjeta__titulo" id="titulo-tratamientos">
-                {% icono 'pastilla' %} {% if historial %}Historial de tratamientos{% else %}Tratamientos en curso{% endif %}
-            </h2>
-            {% if medicamentos %}
-            <p class="tarjeta__subtitulo">
-                {% if historial %}Todos los tratamientos registrados, ordenados por fecha de inicio: primero los más recientes.{% else %}Ordenados por fecha de fin: primero los que terminan antes.{% endif %}
-            </p>
-            {% endif %}
-        </div>
-    </header>
+    <h2 class="oculto-visual" id="titulo-tratamientos">{% if historial %}Historial de tratamientos{% else %}Tratamientos en curso{% endif %}</h2>
 
     {% if medicamentos %}
+    {% with total=medicamentos|length %}
+    <div class="resumen-franja">
+        <span><strong>{{ total|floatformat:"g" }}</strong> tratamiento{{ total|pluralize }} {% if historial %}en el historial{% else %}en curso{% endif %}</span>
+        {% if total > 1 %}
+        <span class="empuja fila fila--sm texto-tenue texto-xs">{% icono 'calendario' 'icono--sm' %} {% if historial %}Por fecha de inicio, del más reciente al más antiguo{% else %}Por fecha de finalización, primero los que terminan antes{% endif %}</span>
+        {% endif %}
+    </div>
+    {% endwith %}
+
     <div class="tabla-contenedor">
-        <table class="tabla tabla--apilable tabla-medicamentos">
+        <table class="tabla tabla--apilable">
             <caption class="oculto-visual">{% if historial %}Historial de tratamientos{% else %}Tratamientos en curso{% endif %}</caption>
             <thead>
                 <tr>
@@ -70,54 +80,40 @@
                     <th scope="col" class="num">Inicio</th>
                     <th scope="col" class="num">Fin</th>
                     <th scope="col">Estado</th>
-                    <th scope="col" class="tabla__acciones"><span class="oculto-visual">Acciones</span></th>
+                    <th scope="col"><span class="oculto-visual">Acciones</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for medicamento in medicamentos %}
-                {% with dias=medicamento.dias_restantes mascota=medicamento.mascota %}
+                {% with mascota=medicamento.mascota %}
                 <tr{% if not medicamento.activo %} class="fila--inactiva"{% endif %}>
-                    <td data-label="Medicamento" class="tabla-medicamentos__principal">
+                    <td class="tabla__principal" data-label="Medicamento">
                         <div class="celda-principal">
-                            <span class="icono-circulo{% if medicamento.activo %} cat-medicamentos{% endif %}">{% icono 'pastilla' 'icono--sm' %}</span>
+                            <span class="icono-circulo cat-medicamentos">{% icono 'pastilla' 'icono--sm' %}</span>
                             <span class="celda-principal__texto">
                                 <a class="celda-principal__titulo" href="{% url 'mascotas:medicamento_editar' medicamento.pk %}">{{ medicamento.nombre }}</a>
                                 {% if medicamento.observaciones %}
-                                <span class="celda-principal__sub" title="{{ medicamento.observaciones }}">{{ medicamento.observaciones|truncatechars:60 }}</span>
+                                <span class="celda-principal__sub celda-principal__sub--una-linea" title="{{ medicamento.observaciones }}">{{ medicamento.observaciones }}</span>
                                 {% endif %}
                             </span>
                         </div>
                     </td>
                     <td data-label="Mascota">
-                        <span class="fila fila--sm medicamentos-mascota">
+                        <span class="celda-mascota">
                             <span class="avatar avatar--xs {{ mascota|tono }}{% if not mascota.activa %} avatar--inactivo{% endif %}" aria-hidden="true">{{ mascota.nombre|inicial }}</span>
-                            <a class="medicamentos-mascota__enlace" href="{{ mascota.get_absolute_url }}">{{ mascota.nombre }}</a>
-                            {% if not mascota.activa %}<span class="texto-xs texto-tenue">Retirada</span>{% endif %}
+                            <a class="celda-mascota__enlace" href="{{ mascota.get_absolute_url }}" title="{{ mascota.nombre }}">{{ mascota.nombre }}</a>
+                            {% if not mascota.activa %}<span class="insignia insignia--neutra"><span class="insignia__punto"></span>Retirada</span>{% endif %}
                         </span>
                     </td>
                     <td data-label="Dosis">{{ medicamento.dosis }}</td>
-                    <td data-label="Frecuencia">
-                        <span class="fila fila--sm medicamentos-frecuencia">{% icono 'reloj' 'icono--sm' %} {{ medicamento.frecuencia }}</span>
+                    <td data-label="Frecuencia" class="texto-2">
+                        <span class="fila fila--sm fila--nowrap">{% icono 'reloj' 'icono--sm texto-tenue' %} {{ medicamento.frecuencia }}</span>
                     </td>
                     <td data-label="Inicio" class="num texto-2">{{ medicamento.fecha_inicio|date:"d M Y" }}</td>
                     <td data-label="Fin" class="num texto-2">
-                        {% if medicamento.fecha_fin %}{{ medicamento.fecha_fin|date:"d M Y" }}{% else %}<span class="texto-tenue">Continuo</span>{% endif %}
+                        {% if medicamento.fecha_fin %}{{ medicamento.fecha_fin|date:"d M Y" }}{% else %}<span class="texto-tenue">Sin fecha de finalización</span>{% endif %}
                     </td>
-                    <td data-label="Estado">
-                        {% if medicamento.fecha_inicio > hoy %}
-                        <span class="insignia insignia--primario"><span class="insignia__punto"></span>Programado</span>
-                        {% elif dias is None %}
-                        <span class="insignia insignia--info"><span class="insignia__punto"></span>Continuo</span>
-                        {% elif dias < 0 %}
-                        <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Finalizado</span>
-                        {% elif dias == 0 %}
-                        <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Termina hoy</span>
-                        {% elif dias <= 3 %}
-                        <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Queda{{ dias|pluralize:"n" }} {{ dias }} día{{ dias|pluralize }}</span>
-                        {% else %}
-                        <span class="insignia insignia--exito"><span class="insignia__punto"></span>Quedan {{ dias }} días</span>
-                        {% endif %}
-                    </td>
+                    <td data-label="Estado">{% insignia_medicamento medicamento %}</td>
                     <td class="tabla__acciones">
                         <div class="fila">
                             <a class="btn btn--icono btn--fantasma btn--sm" href="{% url 'mascotas:medicamento_editar' medicamento.pk %}" aria-label="Editar {{ medicamento.nombre }} de {{ mascota.nombre }}" title="Editar">{% icono 'editar' 'icono--sm' %}</a>
@@ -131,25 +127,35 @@
         </table>
     </div>
     <footer class="tarjeta__pie">
-        <span>{{ medicamentos|length }} tratamiento{{ medicamentos|length|pluralize }}{% if historial %} registrado{{ medicamentos|length|pluralize }}{% else %} en curso{% endif %}</span>
         <span class="fila fila--sm">{% icono 'info' 'icono--sm' %}{% if historial %} Los tratamientos se conservan aunque retires a la mascota.{% else %} Los tratamientos finalizados siguen disponibles en el historial.{% endif %}</span>
     </footer>
 
     {% elif historial %}
     <div class="vacio">
         <span class="vacio__icono">{% icono 'bandeja' 'icono--lg' %}</span>
-        <p class="vacio__titulo">El historial está vacío</p>
+        <p class="vacio__titulo">Aún no hay tratamientos en el historial</p>
         <p class="vacio__texto">Aquí verás todos los tratamientos que registres, tanto los que están en curso como los que ya finalizaron.</p>
         <a class="btn btn--primario" href="{% url 'mascotas:medicamento_crear' %}">{% icono 'plus' %} Nuevo medicamento</a>
+    </div>
+
+    {% elif not tiene_mascotas %}
+    <div class="vacio">
+        <span class="vacio__icono">{% icono 'huella' 'icono--lg' %}</span>
+        <p class="vacio__titulo">Aún no hay mascotas activas</p>
+        <p class="vacio__texto">Cada tratamiento pertenece a una mascota. Registra una para empezar a anotar sus medicamentos.</p>
+        <div class="fila">
+            {% if conteos.historial %}<a class="btn btn--secundario" href="{% url 'mascotas:medicamento_lista' %}?ver=historial">{% icono 'reloj' %} Ver historial ({{ conteos.historial|floatformat:"g" }})</a>{% endif %}
+            <a class="btn btn--primario" href="{% url 'mascotas:mascota_crear' %}">{% icono 'plus' %} Nueva mascota</a>
+        </div>
     </div>
 
     {% elif conteos.historial %}
     <div class="vacio">
         <span class="vacio__icono">{% icono 'check' 'icono--lg' %}</span>
-        <p class="vacio__titulo">No hay tratamientos en curso</p>
+        <p class="vacio__titulo">Aún no hay tratamientos en curso</p>
         <p class="vacio__texto">Todos los tratamientos que registraste ya finalizaron. Puedes consultarlos en el historial o registrar uno nuevo.</p>
         <div class="fila">
-            <a class="btn btn--secundario" href="{% url 'mascotas:medicamento_lista' %}?ver=historial">{% icono 'reloj' %} Ver historial ({{ conteos.historial }})</a>
+            <a class="btn btn--secundario" href="{% url 'mascotas:medicamento_lista' %}?ver=historial">{% icono 'reloj' %} Ver historial ({{ conteos.historial|floatformat:"g" }})</a>
             <a class="btn btn--primario" href="{% url 'mascotas:medicamento_crear' %}">{% icono 'plus' %} Nuevo medicamento</a>
         </div>
     </div>

@@ -8,8 +8,6 @@
 .auth__encabezado { display: flex; flex-direction: column; gap: var(--e-2); margin-bottom: var(--e-6); }
 .auth__encabezado p { color: var(--c-texto-2); }
 .auth__caja > .alerta { margin-bottom: var(--e-5); }
-/* Título de la alerta en su propia línea; como <strong> conserva el color de la alerta (igual que en los formularios). */
-.auth__caja .alerta__titulo { display: block; margin-bottom: 2px; }
 .auth__enviar { margin-top: var(--e-2); }
 .auth__nota {
     display: flex; align-items: center; justify-content: center; gap: var(--e-2);
@@ -20,19 +18,17 @@
 /* Pasos numerados del panel de registro (reutilizan .auth__puntos). */
 .auth__paso { font-size: var(--t-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
 
-/* Requisitos de contraseña: Django entrega el help_text como <ul>. */
-.auth__caja .campo ul {
-    display: grid; gap: 4px; margin: 2px 0 0; padding: var(--e-3);
-    list-style: none; font-size: var(--t-xs); line-height: 1.45; color: var(--c-texto-3);
+/* Requisitos de contraseña (lista de RegistroForm) en un recuadro; el margen ya viene de .campo__ayuda ul. */
+.auth__caja .campo__ayuda ul {
+    display: grid; gap: 4px; padding: var(--e-3);
+    list-style: none; line-height: 1.45;
     background: var(--c-superficie-2); border: 1px solid var(--c-borde); border-radius: var(--r-sm);
 }
-.auth__caja .campo li { position: relative; padding-left: var(--e-4); }
-.auth__caja .campo li::before {
+.auth__caja .campo__ayuda li { position: relative; padding-left: var(--e-4); }
+.auth__caja .campo__ayuda li::before {
     content: ''; position: absolute; left: 2px; top: 0.55em;
     width: 5px; height: 5px; border-radius: 50%; background: var(--c-borde-fuerte);
 }
-/* Un <ul> dentro de <p class="campo__ayuda"> deja párrafos vacíos al analizar el HTML. */
-.auth__caja .campo > p:empty { display: none; }
 
 /* ---------- Páginas de error ---------- */
 .error-pagina {
@@ -57,12 +53,7 @@
 .error-pagina__marca:hover { color: var(--c-texto); text-decoration: none; }
 
 .error-pagina__caja { display: flex; flex-direction: column; align-items: center; gap: var(--e-4); width: 100%; max-width: 560px; }
-.error-pagina__codigo {
-    margin-bottom: var(--e-1);
-    /* El degradado base termina en un verde menta que en tema claro no llega a 3:1 sobre el fondo.
-       Solo background-image: el atajo background reiniciaría background-clip: text. */
-    background-image: linear-gradient(135deg, var(--c-texto) 15%, var(--c-primario));
-}
+.error-pagina__codigo { margin-bottom: var(--e-1); }
 .error-pagina__caja h1 { font-size: var(--t-2xl); letter-spacing: -0.03em; }
 .error-pagina__texto { max-width: 46ch; font-size: var(--t-md); color: var(--c-texto-2); }
 .error-pagina__ruta {
@@ -87,9 +78,6 @@
 
 .error-pagina__atajos { width: 100%; margin-top: var(--e-4); text-align: left; }
 .error-pagina__atajos .lista__extremo { color: var(--c-texto-3); }
-/* El fondo al pasar el cursor sigue las esquinas redondeadas de la tarjeta; el foco queda por dentro. */
-.error-pagina__atajos li:last-child > .lista__item { border-radius: 0 0 calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px); }
-.error-pagina__atajos .lista__item--enlace:focus-visible { outline-offset: -2px; }
 
 .error-pagina__alterno { font-size: var(--t-sm); color: var(--c-texto-2); }
 /* --c-texto-3 sobre --c-fondo queda por debajo de 4.5:1 en tema claro. */

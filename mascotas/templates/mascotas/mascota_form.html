@@ -28,7 +28,7 @@
             <p>Actualiza su información. Los gastos y medicamentos registrados no cambian.</p>
             {% with ini=form.initial %}
             <div class="registro-actual celda-principal">
-                <span class="avatar avatar--sm {{ object|tono }}{% if not object.activa %} avatar--inactivo{% endif %}">{{ ini.nombre|inicial }}</span>
+                <span class="avatar avatar--sm {{ object|tono }}{% if not object.activa %} avatar--inactivo{% endif %}" aria-hidden="true">{{ ini.nombre|inicial }}</span>
                 <span class="celda-principal__texto">
                     <span class="celda-principal__titulo truncar">{{ ini.nombre }}</span>
                     <span class="celda-principal__sub truncar">{{ ini.especie }}{% if ini.raza %} · {{ ini.raza }}{% endif %}{% if ini.fecha_nacimiento %} · {{ ini.fecha_nacimiento|edad }}{% endif %}</span>
@@ -68,7 +68,7 @@
         {% endif %}
 
         {% if object and not object.activa %}
-        <div class="alerta alerta--info">
+        <div class="alerta alerta--info" role="status">
             {% icono 'info' %}
             <div class="alerta__contenido">
                 <strong class="alerta__titulo">Esta mascota está retirada</strong>

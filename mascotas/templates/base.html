@@ -28,7 +28,7 @@
         </nav>
         <div class="lateral__pie">
             <div class="usuario-tarjeta">
-                <span class="avatar avatar--sm {{ user|tono }}">{{ user.username|inicial }}</span>
+                <span class="avatar avatar--sm {{ user|tono }}" aria-hidden="true">{{ user.username|inicial }}</span>
                 <span class="usuario-tarjeta__datos">
                     <span class="usuario-tarjeta__nombre truncar">{{ user.get_full_name|default:user.username }}</span>
                     <span class="usuario-tarjeta__rol">{% if user.is_staff %}Administrador{% else %}Propietario{% endif %}</span>

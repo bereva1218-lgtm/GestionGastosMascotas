@@ -10,7 +10,7 @@ def total(gastos):
 
 
 def totales_por_mascota(gastos):
-    return gastos.values('mascota__id', 'mascota__nombre').annotate(total=Sum('valor_total')).order_by('-total')
+    return gastos.values('mascota__id', 'mascota__nombre', 'mascota__activa').annotate(total=Sum('valor_total')).order_by('-total')
 
 
 def totales_por_categoria(gastos):

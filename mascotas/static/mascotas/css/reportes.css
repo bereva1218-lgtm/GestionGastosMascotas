@@ -7,23 +7,13 @@
 .reporte-periodo__texto { display: flex; align-items: center; gap: var(--e-2); font-size: var(--t-sm); color: var(--c-texto-2); }
 .reporte-periodo__texto .icono { color: var(--c-texto-3); }
 .reporte-periodo__texto strong { color: var(--c-texto); font-weight: 600; }
-.reporte-periodo-tarjeta .alerta__contenido { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 
-/* Los campos se alinean por arriba para que un mensaje de error bajo un campo no lo desplace;
-   el botón baja lo que mide la etiqueta (texto xs × interlineado 1,55 + separación de .campo). */
-.reporte-rango { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--e-3); margin: 0; }
+/* Rango personalizado: mismos campos (42 px, etiqueta .campo--compacto) y botón que los filtros de Gastos. */
+.reporte-rango { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--e-3); margin: 0; }
 .reporte-rango .campo { width: 168px; }
-.reporte-rango .campo__etiqueta { font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-texto-3); }
-.reporte-rango .campo input:not([type="checkbox"]):not([type="radio"]) { min-height: 40px; padding-top: 7px; padding-bottom: 7px; font-size: var(--t-sm); }
-.reporte-rango .btn { margin-top: calc(var(--t-xs) * 1.55 + 6px); }
+.reporte-rango .btn { min-height: 42px; }
 
-@media (pointer: coarse) {
-    .reporte-rango .campo input:not([type="checkbox"]):not([type="radio"]) { min-height: 44px; }
-    .reporte-periodo .segmento a { min-height: 40px; }
-}
-
-/* ---------- KPI con color de categoría ---------- */
-.kpi__icono[class*="cat-"] { background: var(--cat-suave, var(--c-cat-otra-suave)); color: var(--cat, var(--c-cat-otra)); }
+/* ---------- KPI de texto (categoría principal) ---------- */
 .reporte-kpi-texto { overflow-wrap: anywhere; }
 
 /* ---------- Evolución mensual: gráfico + detalle ---------- */
@@ -33,10 +23,9 @@
 .reporte-evolucion__detalle thead th { position: sticky; top: 0; z-index: 1; }
 .reporte-evolucion__detalle .fila--pico td:first-child { font-weight: 600; }
 
-/* Cifras sobre las columnas, en pantallas anchas y en papel (en A4 el ancho útil baja de 720 px y
-   estilos.css las ocultaría). Con 8 meses o más solo se rotula el mes de mayor gasto; la tabla tiene el resto. */
+/* Cifras sobre las columnas (estilos.css solo las oculta en pantallas estrechas): con 8 meses o más
+   solo se rotula el mes de mayor gasto; la tabla tiene el resto. Fuera de móvil para no reactivar la cifra allí. */
 @media print, (min-width: 721px) {
-    .reporte-evolucion .grafico-columnas__valor { display: block; }
     .reporte-evolucion .grafico-columnas__item:first-child:nth-last-child(n+8) .grafico-columnas__valor,
     .reporte-evolucion .grafico-columnas__item:first-child:nth-last-child(n+8) ~ .grafico-columnas__item .grafico-columnas__valor { display: none; }
     .reporte-evolucion .grafico-columnas__item:first-child:nth-last-child(n+8).grafico-columnas__item--actual .grafico-columnas__valor,
@@ -67,7 +56,8 @@
     .reporte-periodo, .reporte-periodo__presets { align-items: stretch; }
     .reporte-rango { width: 100%; }
     .reporte-rango .campo { flex: 1 1 140px; width: auto; }
-    .reporte-rango .btn { flex: 1 1 100%; margin-top: 0; }
+    .reporte-rango .btn { flex: 1 1 100%; }
+    /* En dos columnas de KPI, "Medicamentos" a tamaño --md se partiría a media palabra. */
     .reporte-kpi-texto { font-size: var(--t-md); }
 
     /* Pie de las tablas apiladas: una fila por dato, con su etiqueta, en lugar de cifras sueltas en línea. */
@@ -84,9 +74,4 @@
 @media print {
     .reporte-evolucion { grid-template-columns: minmax(0, 1fr); }
     .reporte-evolucion__detalle { max-height: none; overflow: visible; border-left: 0; border-top: 1px solid var(--c-borde); }
-    .grafico-columnas__barra, .barras__pista, .barras__relleno, .barra-apilada, .barra-apilada__segmento,
-    .leyenda__punto, .insignia, .icono-circulo, .kpi__icono, .avatar {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
 }

@@ -189,3 +189,36 @@ class FiltrosCompartidosTests(SimpleTestCase):
         self.assertEqual(estado_medicamento(med(dias=1))['texto'], 'Queda 1 día')
         self.assertEqual(estado_medicamento(med(dias=3))['variante'], 'aviso')
         self.assertEqual(estado_medicamento(med(dias=10)), {'texto': 'Quedan 10 días', 'variante': 'exito'})
+
+
+class AjustesFinalesTests(VistasBase):
+    def test_editar_con_errores_conserva_el_original(self):
+        hoy = timezone.localdate()
+        medicamento = Medicamento.objects.create(mascota=self.michi, nombre='Antipulgas', dosis='1', frecuencia='D',
+                                                 fecha_inicio=hoy)
+        respuesta = self.client.post(reverse('mascotas:medicamento_editar', args=[medicamento.pk]), {
+            'mascota': self.michi.pk, 'nombre': '', 'dosis': '1', 'frecuencia': 'D',
+            'fecha_inicio': (hoy + timedelta(days=9)).isoformat(),
+        })
+        self.assertEqual(respuesta.context['original'].fecha_inicio, hoy)
+
+    def test_tiene_mascotas_solo_cuenta_activas(self):
+        self.michi.activa = False
+        self.michi.save()
+        for nombre in ('gasto_lista', 'medicamento_lista', 'reportes'):
+            with self.subTest(vista=nombre):
+                self.assertFalse(self.client.get(reverse(f'mascotas:{nombre}')).context['tiene_mascotas'])
+
+    def test_reportes_marca_mascotas_retiradas(self):
+        self.crear_gasto(self.michi, self.comida, date(2026, 7, 10))
+        self.michi.activa = False
+        self.michi.save()
+        contexto = self.client.get(reverse('mascotas:reportes')).context
+        self.assertFalse(contexto['por_mascota'][0]['mascota__activa'])
+        self.assertEqual(contexto['hoy'], timezone.localdate())
+
+    def test_selects_marcan_mascotas_retiradas(self):
+        tom = Mascota.objects.create(usuario=self.ana, nombre='Tom', sexo='M', activa=False)
+        campo = GastoFiltroForm(usuario=self.ana).fields['mascota']
+        self.assertEqual(campo.label_from_instance(tom), 'Tom (retirada)')
+        self.assertEqual(campo.label_from_instance(self.michi), 'Michi')

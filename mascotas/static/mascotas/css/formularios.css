@@ -25,20 +25,14 @@
     --cat: var(--c-primario); --cat-suave: var(--c-primario-suave);
     margin-bottom: var(--e-3);
 }
-.formulario__seccion-texto p + p { margin-top: var(--e-2); }
 
 /* Total en vivo: ocupa todo el ancho de la rejilla, bajo cantidad y valor unitario. */
 .formulario__rejilla > .resumen-calculo { grid-column: 1 / -1; }
 .resumen-calculo__formula { margin-top: 2px; font-size: var(--t-xs); color: var(--c-texto-3); }
 
-/* Alerta con título y texto apilados. */
-.alerta__contenido { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-
-/* Resumen de errores: cada campo con error enlaza a su control. */
-.alerta__lista { display: flex; flex-direction: column; gap: 2px; margin: var(--e-1) 0 0; padding-left: var(--e-4); color: var(--c-texto-2); }
-.alerta__lista:empty { display: none; }
-.alerta__lista a { color: var(--c-texto); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
-.alerta__lista a:hover { color: var(--c-peligro); }
+/* Acciones dentro de una alerta (p. ej. "Nueva mascota" cuando no hay mascotas activas). */
+.alerta__acciones { margin-top: var(--e-2); }
+.alerta__acciones .icono { margin-top: 0; }
 
 /* ---------- Confirmación de eliminación ---------- */
 .confirmacion { max-width: 560px; margin: var(--e-4) auto 0; }

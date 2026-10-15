@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load ui static %}
 
-{% block titulo %}{% if tipo == 'mascota' %}Eliminar a {{ object.nombre }}{% elif tipo == 'gasto' %}Eliminar gasto · {{ object.producto }}{% elif tipo == 'medicamento' %}Eliminar medicamento · {{ object.nombre }}{% else %}Confirmar eliminación{% endif %}{% endblock %}
+{% block titulo %}{% if tipo == 'mascota' %}Eliminar mascota · {{ object.nombre }}{% elif tipo == 'gasto' %}Eliminar gasto · {{ object.producto }}{% elif tipo == 'medicamento' %}Eliminar medicamento · {{ object.nombre }}{% else %}Confirmar eliminación{% endif %}{% endblock %}
 
 {% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/formularios.css' %}">{% endblock %}
 
@@ -21,7 +21,7 @@
 
 {% block contenido %}
 {% if tipo == 'mascota' %}
-{% with num_gastos=object.gastos.count num_medicamentos=object.medicamentos.count %}
+{# num_gastos y num_medicamentos vienen de la vista (MascotaEliminar). #}
 <div class="confirmacion">
     <article class="tarjeta">
         <div class="confirmacion__cuerpo">
@@ -41,7 +41,7 @@
                 <h2 class="oculto-visual" id="titulo-resumen">{% if num_gastos or num_medicamentos %}Datos de la mascota{% else %}Mascota que se eliminará{% endif %}</h2>
                 <div class="confirmacion__resumen-cabeza">
                     <div class="celda-principal">
-                        <span class="avatar avatar--sm {{ object|tono }}{% if not object.activa %} avatar--inactivo{% endif %}">{{ object.nombre|inicial }}</span>
+                        <span class="avatar avatar--sm {{ object|tono }}{% if not object.activa %} avatar--inactivo{% endif %}" aria-hidden="true">{{ object.nombre|inicial }}</span>
                         <span class="celda-principal__texto">
                             <span class="celda-principal__titulo">{{ object.nombre }}</span>
                             <span class="celda-principal__sub">{{ object.especie }}{% if object.raza %} · {{ object.raza }}{% endif %}</span>
@@ -54,25 +54,25 @@
                     {% endif %}
                 </div>
                 <dl class="ficha">
-                    <dt>{% icono 'usuario' %} Sexo</dt>
+                    <dt>{% if object.sexo == 'M' %}{% icono 'macho' %}{% else %}{% icono 'hembra' %}{% endif %} Sexo</dt>
                     <dd>{{ object.get_sexo_display }}</dd>
                     {% if object.fecha_nacimiento %}
                     <dt>{% icono 'calendario' %} Edad</dt>
                     <dd>{{ object.fecha_nacimiento|edad }}</dd>
                     {% endif %}
                     <dt>{% icono 'recibo' %} Gastos</dt>
-                    <dd class="num">{{ num_gastos }} registrado{{ num_gastos|pluralize }}</dd>
+                    <dd class="num">{{ num_gastos|floatformat:"g" }} registrado{{ num_gastos|pluralize }}</dd>
                     <dt>{% icono 'pastilla' %} Medicamentos</dt>
-                    <dd class="num">{{ num_medicamentos }} registrado{{ num_medicamentos|pluralize }}</dd>
+                    <dd class="num">{{ num_medicamentos|floatformat:"g" }} registrado{{ num_medicamentos|pluralize }}</dd>
                 </dl>
             </section>
 
             {% if num_gastos or num_medicamentos %}
-            <div class="alerta alerta--aviso" id="motivo-bloqueo">
+            <div class="alerta alerta--aviso" role="status" id="motivo-bloqueo">
                 {% icono 'alerta' %}
                 <div class="alerta__contenido">
                     <strong class="alerta__titulo">No se puede eliminar porque tiene historial</strong>
-                    <p>{{ object.nombre }} tiene {% if num_gastos %}{{ num_gastos }} gasto{{ num_gastos|pluralize }}{% endif %}{% if num_gastos and num_medicamentos %} y {% endif %}{% if num_medicamentos %}{{ num_medicamentos }} medicamento{{ num_medicamentos|pluralize }}{% endif %} registrado{% if num_gastos|add:num_medicamentos > 1 %}s{% endif %}. Para no perder ese historial, las mascotas con registros no se eliminan.</p>
+                    <p>{{ object.nombre }} tiene {% if num_gastos %}{{ num_gastos|floatformat:"g" }} gasto{{ num_gastos|pluralize }}{% endif %}{% if num_gastos and num_medicamentos %} y {% endif %}{% if num_medicamentos %}{{ num_medicamentos|floatformat:"g" }} medicamento{{ num_medicamentos|pluralize }}{% endif %} registrado{% if num_gastos|add:num_medicamentos > 1 %}s{% endif %}. Para no perder ese historial, las mascotas con registros no se eliminan.</p>
                     {% if object.activa %}
                     <p>Retira la mascota en su lugar: dejará de aparecer entre las activas, su historial se conserva y puedes reactivarla cuando quieras.</p>
                     {% else %}
@@ -81,7 +81,7 @@
                 </div>
             </div>
             {% else %}
-            <div class="alerta alerta--aviso">
+            <div class="alerta alerta--aviso" role="status">
                 {% icono 'alerta' %}
                 <div class="alerta__contenido">
                     <strong class="alerta__titulo">Esta acción no se puede deshacer</strong>
@@ -115,9 +115,9 @@
         </div>
     </article>
 </div>
-{% endwith %}
 
 {% elif tipo == 'gasto' %}
+{% with mascota=object.mascota %}
 <div class="confirmacion">
     <article class="tarjeta">
         <div class="confirmacion__cuerpo">
@@ -125,7 +125,7 @@
                 <span class="confirmacion__icono">{% icono 'alerta' 'icono--lg' %}</span>
                 <div class="pagina-encabezado__texto">
                     <h1>¿Eliminar el gasto «{{ object.producto }}»?</h1>
-                    <p>Dejará de sumar en los totales de {{ object.mascota }} y en tus reportes.</p>
+                    <p>Dejará de sumar en los totales de {{ mascota.nombre }} y en tus reportes.</p>
                 </div>
             </header>
 
@@ -133,7 +133,7 @@
                 <h2 class="oculto-visual" id="titulo-resumen">Gasto que se eliminará</h2>
                 <div class="confirmacion__resumen-cabeza">
                     <div class="celda-principal">
-                        <span class="icono-circulo {{ object.categoria|clase_categoria }}">{% icono 'paquete' 'icono--sm' %}</span>
+                        <span class="icono-circulo {{ object.categoria|clase_categoria }}">{% icono object.categoria|icono_categoria 'icono--sm' %}</span>
                         <span class="celda-principal__texto">
                             <span class="celda-principal__titulo">{{ object.producto }}</span>
                             {% if object.proveedor %}<span class="celda-principal__sub">{{ object.proveedor }}</span>{% endif %}
@@ -143,17 +143,22 @@
                 </div>
                 <dl class="ficha">
                     <dt>{% icono 'huella' %} Mascota</dt>
-                    <dd>{{ object.mascota }}</dd>
+                    <dd>
+                        <span class="fila fila--sm">
+                            <span class="celda-mascota"><span class="avatar avatar--xs {{ mascota|tono }}{% if not mascota.activa %} avatar--inactivo{% endif %}" aria-hidden="true">{{ mascota.nombre|inicial }}</span><a class="celda-mascota__enlace" href="{{ mascota.get_absolute_url }}">{{ mascota.nombre }}</a></span>
+                            {% if not mascota.activa %}<span class="insignia insignia--neutra"><span class="insignia__punto"></span>Retirada</span>{% endif %}
+                        </span>
+                    </dd>
                     <dt>{% icono 'etiqueta' %} Categoría</dt>
                     <dd><span class="insignia {{ object.categoria|clase_categoria }}">{{ object.categoria }}</span></dd>
                     <dt>{% icono 'calendario' %} Fecha</dt>
-                    <dd>{{ object.fecha|date:"j \d\e F \d\e Y"|lower }}</dd>
+                    <dd>{{ object.fecha|fecha_larga }}</dd>
                     <dt>{% icono 'hash' %} Cantidad × valor</dt>
-                    <dd class="num">{{ object.cantidad|floatformat:"-2" }} × {{ object.valor_unitario|moneda }}</dd>
+                    <dd class="num">{{ object.cantidad|floatformat:"-2g" }} × {{ object.valor_unitario|moneda }}</dd>
                 </dl>
             </section>
 
-            <div class="alerta alerta--aviso">
+            <div class="alerta alerta--aviso" role="status">
                 {% icono 'alerta' %}
                 <div class="alerta__contenido">
                     <strong class="alerta__titulo">Esta acción no se puede deshacer</strong>
@@ -169,8 +174,10 @@
         </form>
     </article>
 </div>
+{% endwith %}
 
 {% elif tipo == 'medicamento' %}
+{% with mascota=object.mascota %}
 <div class="confirmacion">
     <article class="tarjeta">
         <div class="confirmacion__cuerpo">
@@ -178,7 +185,7 @@
                 <span class="confirmacion__icono">{% icono 'alerta' 'icono--lg' %}</span>
                 <div class="pagina-encabezado__texto">
                     <h1>¿Eliminar el medicamento «{{ object.nombre }}»?</h1>
-                    <p>El tratamiento desaparecerá del historial de {{ object.mascota }}.</p>
+                    <p>El tratamiento desaparecerá del historial de {{ mascota.nombre }}.</p>
                 </div>
             </header>
 
@@ -189,43 +196,35 @@
                         <span class="icono-circulo cat-medicamentos">{% icono 'pastilla' 'icono--sm' %}</span>
                         <span class="celda-principal__texto">
                             <span class="celda-principal__titulo">{{ object.nombre }}</span>
-                            <span class="celda-principal__sub">{{ object.mascota }}</span>
                         </span>
                     </div>
-                    {# Mismos estados que la lista de medicamentos. #}
-                    {% now "Y-m-d" as hoy_iso %}
-                    {% with dias=object.dias_restantes %}
-                    {% if object.fecha_inicio|date:"Y-m-d" > hoy_iso %}
-                    <span class="insignia insignia--primario"><span class="insignia__punto"></span>Programado</span>
-                    {% elif dias is None %}
-                    <span class="insignia insignia--info"><span class="insignia__punto"></span>Continuo</span>
-                    {% elif dias < 0 %}
-                    <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Finalizado</span>
-                    {% elif dias == 0 %}
-                    <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Termina hoy</span>
-                    {% elif dias <= 3 %}
-                    <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Queda{{ dias|pluralize:"n" }} {{ dias }} día{{ dias|pluralize }}</span>
-                    {% else %}
-                    <span class="insignia insignia--exito"><span class="insignia__punto"></span>Quedan {{ dias }} días</span>
-                    {% endif %}
-                    {% endwith %}
+                    {% insignia_medicamento object %}
                 </div>
                 <dl class="ficha">
+                    <dt>{% icono 'huella' %} Mascota</dt>
+                    <dd>
+                        <span class="fila fila--sm">
+                            <span class="celda-mascota"><span class="avatar avatar--xs {{ mascota|tono }}{% if not mascota.activa %} avatar--inactivo{% endif %}" aria-hidden="true">{{ mascota.nombre|inicial }}</span><a class="celda-mascota__enlace" href="{{ mascota.get_absolute_url }}">{{ mascota.nombre }}</a></span>
+                            {% if not mascota.activa %}<span class="insignia insignia--neutra"><span class="insignia__punto"></span>Retirada</span>{% endif %}
+                        </span>
+                    </dd>
                     <dt>{% icono 'gota' %} Dosis</dt>
                     <dd>{{ object.dosis }}</dd>
                     <dt>{% icono 'reloj' %} Frecuencia</dt>
                     <dd>{{ object.frecuencia }}</dd>
                     <dt>{% icono 'calendario' %} Periodo</dt>
-                    <dd>{% if object.fecha_fin %}Del {{ object.fecha_inicio|date:"j \d\e F \d\e Y"|lower }} al {{ object.fecha_fin|date:"j \d\e F \d\e Y"|lower }}{% else %}Desde el {{ object.fecha_inicio|date:"j \d\e F \d\e Y"|lower }}, sin fecha de fin{% endif %}</dd>
+                    <dd>{% if object.fecha_fin %}Del {{ object.fecha_inicio|fecha_larga }} al {{ object.fecha_fin|fecha_larga }}{% else %}Desde el {{ object.fecha_inicio|fecha_larga }}, sin fecha de finalización{% endif %}</dd>
                 </dl>
             </section>
 
-            <div class="alerta alerta--aviso">
+            <div class="alerta alerta--aviso" role="status">
                 {% icono 'alerta' %}
                 <div class="alerta__contenido">
                     <strong class="alerta__titulo">Esta acción no se puede deshacer</strong>
                     {% if not object.activo %}
-                    <p>Los tratamientos terminados se conservan en el historial de {{ object.mascota }}; elimínalo solo si lo registraste por error.</p>
+                    <p>Los tratamientos terminados se conservan en el historial de {{ mascota.nombre }}; elimínalo solo si lo registraste por error.</p>
+                    {% elif object.programado %}
+                    <p>Todavía no ha empezado. Si solo cambió la fecha o la dosis, <a href="{% url 'mascotas:medicamento_editar' object.pk %}">edita el tratamiento</a> en lugar de eliminarlo.</p>
                     {% elif object.fecha_fin %}
                     <p>Si lo suspendiste antes de tiempo, no hace falta eliminarlo: <a href="{% url 'mascotas:medicamento_editar' object.pk %}">cambia su fecha de finalización</a> y quedará en el historial.</p>
                     {% else %}
@@ -242,6 +241,7 @@
         </form>
     </article>
 </div>
+{% endwith %}
 
 {% else %}
 <div class="confirmacion">

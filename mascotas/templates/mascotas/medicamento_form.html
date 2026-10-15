@@ -28,23 +28,7 @@
                     <span class="celda-principal__titulo truncar">{{ ini.nombre }}</span>
                     <span class="celda-principal__sub truncar">{% for mascota in form.fields.mascota.queryset %}{% if mascota.pk == ini.mascota %}{{ mascota }} · {% endif %}{% endfor %}{{ ini.dosis }} · {{ ini.frecuencia }}</span>
                 </span>
-                {# Mismos estados que la lista de medicamentos. #}
-                {% now "Y-m-d" as hoy_iso %}
-                {% with dias=object.dias_restantes %}
-                {% if object.fecha_inicio|date:"Y-m-d" > hoy_iso %}
-                <span class="insignia insignia--primario"><span class="insignia__punto"></span>Programado</span>
-                {% elif dias is None %}
-                <span class="insignia insignia--info"><span class="insignia__punto"></span>Continuo</span>
-                {% elif dias < 0 %}
-                <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Finalizado</span>
-                {% elif dias == 0 %}
-                <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Termina hoy</span>
-                {% elif dias <= 3 %}
-                <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Queda{{ dias|pluralize:"n" }} {{ dias }} día{{ dias|pluralize }}</span>
-                {% else %}
-                <span class="insignia insignia--exito"><span class="insignia__punto"></span>Quedan {{ dias }} días</span>
-                {% endif %}
-                {% endwith %}
+                {% insignia_medicamento original %}
             </div>
             {% endwith %}
             {% else %}
@@ -74,13 +58,19 @@
         {% endif %}
 
         {% if not form.fields.mascota.queryset.exists %}
-        <div class="alerta alerta--aviso">
+        {% with tiene_retiradas=user.mascotas.exists %}
+        <div class="alerta alerta--aviso" role="status">
             {% icono 'alerta' %}
             <div class="alerta__contenido">
                 <strong class="alerta__titulo">Primero necesitas una mascota activa</strong>
-                <p>Cada tratamiento pertenece a una mascota activa. <a href="{% url 'mascotas:mascota_crear' %}">Registra una mascota</a> o <a href="{% url 'mascotas:mascota_lista' %}?estado=retiradas">reactiva una retirada</a> y vuelve para anotar el medicamento.</p>
+                <p>Cada tratamiento pertenece a una mascota activa. {% if tiene_retiradas %}Reactiva una de tus mascotas retiradas o crea una nueva{% else %}Crea tu primera mascota{% endif %} y vuelve para anotar el medicamento.</p>
+                <div class="fila fila--sm alerta__acciones">
+                    <a class="btn btn--primario btn--sm" href="{% url 'mascotas:mascota_crear' %}">{% icono 'plus' 'icono--sm' %} Nueva mascota</a>
+                    {% if tiene_retiradas %}<a class="btn btn--secundario btn--sm" href="{% url 'mascotas:mascota_lista' %}?estado=retiradas">{% icono 'restaurar' 'icono--sm' %} Ver retiradas</a>{% endif %}
+                </div>
             </div>
         </div>
+        {% endwith %}
         {% endif %}
 
         <section class="formulario__seccion" aria-labelledby="seccion-tratamiento">
@@ -101,8 +91,7 @@
             <div class="formulario__seccion-texto">
                 <span class="icono-circulo formulario__seccion-icono">{% icono 'calendario' %}</span>
                 <h2 id="seccion-duracion">Duración</h2>
-                <p>El tratamiento aparece como activo desde la fecha de inicio hasta la de finalización.</p>
-                <p>Si es continuo, deja vacía la fecha de finalización.</p>
+                <p>Hasta la fecha de inicio aparece como «Programado» y después figura en curso hasta la fecha de finalización.</p>
             </div>
             <div class="formulario__rejilla">
                 {% campo form.fecha_inicio %}

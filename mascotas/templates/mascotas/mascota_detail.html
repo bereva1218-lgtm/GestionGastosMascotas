@@ -8,11 +8,8 @@
 <li><span aria-current="page">{{ mascota.nombre }}</span></li>
 {% endblock %}
 
-{% block accion_barra %}
-{% if mascota.activa %}
-<a class="btn btn--primario btn--sm" href="{% url 'mascotas:gasto_crear' %}?mascota={{ mascota.pk }}" aria-label="Registrar gasto para {{ mascota.nombre }}">{% icono 'plus' 'icono--sm' %}<span class="barra-superior__texto-btn">Registrar gasto</span></a>
-{% else %}{{ block.super }}{% endif %}
-{% endblock %}
+{# Activa: la ficha ya ofrece "Nuevo gasto" (encabezado o vacío de la tarjeta de gastos), así que no se repite en la barra. #}
+{% block accion_barra %}{% if not mascota.activa %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block contenido %}
 {% with edad_texto=mascota.fecha_nacimiento|edad num_gastos=gastos|length num_medicamentos=medicamentos|length %}
@@ -32,9 +29,9 @@
                 </div>
                 <p class="perfil__meta">
                     <span>{% icono 'huella' %} {{ mascota.especie }}{% if mascota.raza %} · {{ mascota.raza }}{% endif %}</span>
-                    <span>{% icono 'etiqueta' %} {{ mascota.get_sexo_display }}</span>
+                    <span>{% if mascota.sexo == 'M' %}{% icono 'macho' %}{% else %}{% icono 'hembra' %}{% endif %} {{ mascota.get_sexo_display }}</span>
                     {% if edad_texto %}<span>{% icono 'calendario' %} {{ edad_texto }}</span>{% endif %}
-                    {% if mascota.peso %}<span>{% icono 'peso' %} {{ mascota.peso.normalize }} kg</span>{% endif %}
+                    {% if mascota.peso %}<span>{% icono 'peso' %} {{ mascota.peso|floatformat:"-2g" }} kg</span>{% endif %}
                 </p>
             </div>
             <div class="perfil__acciones">
@@ -67,19 +64,20 @@
             </div>
             <div class="estadistica">
                 <dt class="estadistica__etiqueta">Gastos registrados</dt>
-                <dd class="estadistica__valor">{{ num_gastos }}</dd>
-                <dd class="mascota-estadistica__meta">{% if num_gastos %}{% with n=por_categoria|length %}En {{ n }} categoría{{ n|pluralize }}{% endwith %}{% else %}Sin registros{% endif %}</dd>
+                <dd class="estadistica__valor">{{ num_gastos|floatformat:"g" }}</dd>
+                <dd class="mascota-estadistica__meta">{% if num_gastos %}{% with n=por_categoria|length %}En {{ n|floatformat:"g" }} categoría{{ n|pluralize }}{% endwith %}{% else %}Sin registros{% endif %}</dd>
             </div>
             <div class="estadistica">
-                <dt class="estadistica__etiqueta">Tratamientos activos</dt>
-                <dd class="estadistica__valor">{{ medicamentos_activos }}</dd>
-                <dd class="mascota-estadistica__meta">{% if num_medicamentos %}De {{ num_medicamentos }} registrado{{ num_medicamentos|pluralize }}{% else %}Sin medicamentos{% endif %}</dd>
+                <dt class="estadistica__etiqueta">Tratamientos en curso</dt>
+                <dd class="estadistica__valor">{{ medicamentos_activos|floatformat:"g" }}</dd>
+                <dd class="mascota-estadistica__meta">{% if num_medicamentos %}De {{ num_medicamentos|floatformat:"g" }} registrado{{ num_medicamentos|pluralize }}{% else %}Sin medicamentos{% endif %}</dd>
             </div>
             <div class="estadistica">
                 <dt class="estadistica__etiqueta">Último gasto</dt>
                 {% if ultimo_gasto %}
-                <dd class="estadistica__valor">{{ ultimo_gasto.fecha|date:"d M Y" }}</dd>
-                <dd class="mascota-estadistica__meta truncar" title="{{ ultimo_gasto.producto }}">{{ ultimo_gasto.producto }}</dd>
+                {# La fecha larga va primero en la frase para que nunca la recorte un producto de nombre largo. #}
+                <dd class="estadistica__valor">{{ ultimo_gasto.valor_total|moneda }}</dd>
+                <dd class="mascota-estadistica__meta truncar" title="{{ ultimo_gasto.producto }}, el {{ ultimo_gasto.fecha|fecha_larga }}">{{ ultimo_gasto.fecha|fecha_larga }} · {{ ultimo_gasto.producto }}</dd>
                 {% else %}
                 <dd class="estadistica__valor texto-tenue"><span aria-hidden="true">—</span><span class="oculto-visual">Ninguno</span></dd>
                 <dd class="mascota-estadistica__meta">Sin gastos todavía</dd>
@@ -91,10 +89,10 @@
 
 <div class="pila pila--lg">
     {% if not mascota.activa %}
-    <div class="alerta alerta--info">
+    <div class="alerta alerta--info" role="status">
         {% icono 'info' %}
-        <div>
-            <div class="alerta__titulo">Esta mascota está retirada</div>
+        <div class="alerta__contenido">
+            <strong class="alerta__titulo">Esta mascota está retirada</strong>
             <p>Su historial de gastos y medicamentos se conserva y sigue contando en tus reportes, pero no puedes registrarle gastos ni medicamentos nuevos. Reactívala si vuelve a estar a tu cargo.</p>
         </div>
     </div>
@@ -106,10 +104,10 @@
                 <header class="tarjeta__encabezado">
                     <div>
                         <h2 class="tarjeta__titulo" id="titulo-gastos">{% icono 'recibo' %} Gastos</h2>
-                        <p class="tarjeta__subtitulo">{% if num_gastos %}{{ num_gastos }} registro{{ num_gastos|pluralize }}, del más reciente al más antiguo{% else %}Compras de comida, medicamentos y juguetes{% endif %}</p>
+                        <p class="tarjeta__subtitulo">{% if num_gastos %}{% if num_gastos > 10 %}Los 10 más recientes de {{ num_gastos|floatformat:"g" }}{% else %}{{ num_gastos|floatformat:"g" }} registro{{ num_gastos|pluralize }}, del más reciente al más antiguo{% endif %}{% else %}Compras de comida, medicamentos y juguetes{% endif %}</p>
                     </div>
                     {% if mascota.activa and num_gastos %}
-                    <a class="btn btn--secundario btn--sm" href="{% url 'mascotas:gasto_crear' %}?mascota={{ mascota.pk }}" aria-label="Registrar gasto para {{ mascota.nombre }}">{% icono 'plus' 'icono--sm' %} Gasto</a>
+                    <a class="btn btn--secundario btn--sm" href="{% url 'mascotas:gasto_crear' %}?mascota={{ mascota.pk }}" aria-label="Nuevo gasto para {{ mascota.nombre }}">{% icono 'plus' 'icono--sm' %} Nuevo gasto</a>
                     {% endif %}
                 </header>
                 {% if num_gastos %}
@@ -120,22 +118,22 @@
                             <tr>
                                 <th scope="col">Producto</th>
                                 <th scope="col">Categoría</th>
-                                <th scope="col">Fecha</th>
+                                <th scope="col" class="num">Fecha</th>
                                 <th scope="col" class="num"><abbr title="Cantidad">Cant.</abbr></th>
                                 <th scope="col" class="num">Total</th>
                                 <th scope="col"><span class="oculto-visual">Acciones</span></th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for gasto in gastos %}
+                            {% for gasto in gastos|slice:":10" %}
                             {% with clase=gasto.categoria|clase_categoria %}
                             <tr>
-                                <td data-label="Producto" class="mascota-gastos__principal">
+                                <td data-label="Producto" class="tabla__principal">
                                     <div class="celda-principal">
-                                        <span class="icono-circulo {{ clase }}">{% if clase == 'cat-comida' %}{% icono 'comida' 'icono--sm' %}{% elif clase == 'cat-medicamentos' %}{% icono 'pastilla' 'icono--sm' %}{% elif clase == 'cat-juguetes' %}{% icono 'regalo' 'icono--sm' %}{% else %}{% icono 'paquete' 'icono--sm' %}{% endif %}</span>
+                                        <span class="icono-circulo {{ clase }}">{% icono gasto.categoria|icono_categoria 'icono--sm' %}</span>
                                         <span class="celda-principal__texto">
                                             <a class="celda-principal__titulo" href="{% url 'mascotas:gasto_editar' gasto.pk %}">{{ gasto.producto }}</a>
-                                            {% if gasto.proveedor %}<span class="celda-principal__sub">{{ gasto.proveedor }}</span>{% endif %}
+                                            {% if gasto.proveedor %}<span class="celda-principal__sub celda-principal__sub--una-linea" title="{{ gasto.proveedor }}">{{ gasto.proveedor }}</span>{% endif %}
                                         </span>
                                     </div>
                                 </td>
@@ -162,15 +160,15 @@
                 </div>
                 <footer class="tarjeta__pie">
                     <span>Total acumulado <span class="mascota-pie__total">{{ total_gastos|moneda }}</span></span>
-                    <a class="btn btn--fantasma btn--sm" href="{% url 'mascotas:gasto_lista' %}?mascota={{ mascota.pk }}">Ver en el listado {% icono 'derecha' 'icono--sm' %}</a>
+                    <a class="btn btn--fantasma btn--sm" href="{% url 'mascotas:gasto_lista' %}?mascota={{ mascota.pk }}" aria-label="Ver todos los gastos de {{ mascota.nombre }}">Ver todos {% icono 'derecha' 'icono--sm' %}</a>
                 </footer>
                 {% else %}
                 <div class="vacio">
                     <span class="vacio__icono">{% icono 'recibo' 'icono--lg' %}</span>
-                    <p class="vacio__titulo">Sin gastos registrados</p>
+                    <p class="vacio__titulo">Aún no hay gastos</p>
                     {% if mascota.activa %}
                     <p class="vacio__texto">Registra la primera compra de comida, medicamentos o juguetes de {{ mascota.nombre }}.</p>
-                    <a class="btn btn--primario" href="{% url 'mascotas:gasto_crear' %}?mascota={{ mascota.pk }}">{% icono 'plus' %} Registrar gasto</a>
+                    <a class="btn btn--primario" href="{% url 'mascotas:gasto_crear' %}?mascota={{ mascota.pk }}">{% icono 'plus' %} Nuevo gasto</a>
                     {% else %}
                     <p class="vacio__texto">Reactiva esta mascota si quieres registrarle gastos.</p>
                     {% endif %}
@@ -182,17 +180,15 @@
                 <header class="tarjeta__encabezado">
                     <div>
                         <h2 class="tarjeta__titulo" id="titulo-medicamentos">{% icono 'pastilla' %} Medicamentos</h2>
-                        <p class="tarjeta__subtitulo">{% if num_medicamentos %}{{ medicamentos_activos }} en curso de {{ num_medicamentos }} registrado{{ num_medicamentos|pluralize }}{% else %}Tratamientos, dosis y frecuencia{% endif %}</p>
+                        <p class="tarjeta__subtitulo">{% if num_medicamentos %}{{ medicamentos_activos|floatformat:"g" }} en curso de {{ num_medicamentos|floatformat:"g" }} registrado{{ num_medicamentos|pluralize }}{% else %}Tratamientos, dosis y frecuencia{% endif %}</p>
                     </div>
                     {% if mascota.activa and num_medicamentos %}
-                    <a class="btn btn--secundario btn--sm" href="{% url 'mascotas:medicamento_crear' %}?mascota={{ mascota.pk }}" aria-label="Registrar medicamento para {{ mascota.nombre }}">{% icono 'plus' 'icono--sm' %} Medicamento</a>
+                    <a class="btn btn--secundario btn--sm" href="{% url 'mascotas:medicamento_crear' %}?mascota={{ mascota.pk }}" aria-label="Nuevo medicamento para {{ mascota.nombre }}">{% icono 'plus' 'icono--sm' %} Nuevo medicamento</a>
                     {% endif %}
                 </header>
                 {% if num_medicamentos %}
-                {% now "Y-m-d" as hoy_iso %}
                 <ul class="lista">
                     {% for medicamento in medicamentos %}
-                    {% with dias=medicamento.dias_restantes %}
                     <li class="lista__item mascota-medicamento{% if not medicamento.activo %} mascota-medicamento--finalizado{% endif %}">
                         <span class="icono-circulo{% if medicamento.activo %} cat-medicamentos{% endif %}">{% icono 'pastilla' 'icono--sm' %}</span>
                         <span class="lista__texto">
@@ -200,36 +196,22 @@
                             <span class="lista__sub">{{ medicamento.dosis }} · {{ medicamento.frecuencia }} · {% if medicamento.fecha_fin %}{{ medicamento.fecha_inicio|date:"d M Y" }} – {{ medicamento.fecha_fin|date:"d M Y" }}{% else %}Desde el {{ medicamento.fecha_inicio|date:"d M Y" }}{% endif %}</span>
                         </span>
                         <span class="mascota-medicamento__extremo">
-                            {# Mismas reglas que el listado de medicamentos; las fechas ISO se comparan como texto. #}
-                            {% if medicamento.fecha_inicio|date:"Y-m-d" > hoy_iso %}
-                            <span class="insignia insignia--primario"><span class="insignia__punto"></span>Programado</span>
-                            {% elif dias is None %}
-                            <span class="insignia insignia--info"><span class="insignia__punto"></span>Continuo</span>
-                            {% elif dias < 0 %}
-                            <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Finalizado</span>
-                            {% elif dias == 0 %}
-                            <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Termina hoy</span>
-                            {% elif dias <= 3 %}
-                            <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Queda{{ dias|pluralize:"n" }} {{ dias }} día{{ dias|pluralize }}</span>
-                            {% else %}
-                            <span class="insignia insignia--exito"><span class="insignia__punto"></span>Quedan {{ dias }} días</span>
-                            {% endif %}
+                            {% insignia_medicamento medicamento %}
                             <span class="mascota-medicamento__acciones">
                                 <a class="btn btn--icono btn--fantasma btn--sm" href="{% url 'mascotas:medicamento_editar' medicamento.pk %}" aria-label="Editar medicamento {{ medicamento.nombre }}" title="Editar">{% icono 'editar' 'icono--sm' %}</a>
                                 <a class="btn btn--icono btn--peligro-suave btn--sm" href="{% url 'mascotas:medicamento_eliminar' medicamento.pk %}" aria-label="Eliminar medicamento {{ medicamento.nombre }}" title="Eliminar">{% icono 'eliminar' 'icono--sm' %}</a>
                             </span>
                         </span>
                     </li>
-                    {% endwith %}
                     {% endfor %}
                 </ul>
                 {% else %}
                 <div class="vacio vacio--compacto">
                     <span class="vacio__icono">{% icono 'pastilla' 'icono--lg' %}</span>
-                    <p class="vacio__titulo">Sin medicamentos registrados</p>
+                    <p class="vacio__titulo">Aún no hay medicamentos</p>
                     {% if mascota.activa %}
                     <p class="vacio__texto">Registra los tratamientos de {{ mascota.nombre }} para seguir su dosis, frecuencia y duración.</p>
-                    <a class="btn btn--secundario btn--sm" href="{% url 'mascotas:medicamento_crear' %}?mascota={{ mascota.pk }}">{% icono 'plus' 'icono--sm' %} Registrar medicamento</a>
+                    <a class="btn btn--primario btn--sm" href="{% url 'mascotas:medicamento_crear' %}?mascota={{ mascota.pk }}">{% icono 'plus' 'icono--sm' %} Nuevo medicamento</a>
                     {% else %}
                     <p class="vacio__texto">Reactiva esta mascota si quieres registrarle medicamentos.</p>
                     {% endif %}
@@ -249,11 +231,11 @@
                         <dt>{% icono 'calendario' %} Nacimiento</dt>
                         <dd>
                             {% if mascota.fecha_nacimiento %}
-                            {{ mascota.fecha_nacimiento|date:"j \d\e F \d\e Y"|lower }}{% if edad_texto %} <span class="texto-tenue">· {{ edad_texto }}</span>{% endif %}
+                            {{ mascota.fecha_nacimiento|fecha_larga }}{% if edad_texto %} <span class="texto-tenue">· {{ edad_texto }}</span>{% endif %}
                             {% else %}<span class="texto-tenue">Sin registrar</span>{% endif %}
                         </dd>
                         <dt>{% icono 'peso' %} Peso</dt>
-                        <dd>{% if mascota.peso %}{{ mascota.peso.normalize }} kg{% else %}<span class="texto-tenue">Sin registrar</span>{% endif %}</dd>
+                        <dd>{% if mascota.peso %}{{ mascota.peso|floatformat:"-2g" }} kg{% else %}<span class="texto-tenue">Sin registrar</span>{% endif %}</dd>
                         <dt>{% icono 'palette' %} Color</dt>
                         <dd>{% if mascota.color %}{{ mascota.color }}{% else %}<span class="texto-tenue">Sin registrar</span>{% endif %}</dd>
                         <dt>{% icono 'salud' %} Estado de salud</dt>
@@ -275,14 +257,13 @@
                     {% if por_categoria %}
                     <ul class="barras">
                         {% for fila in por_categoria %}
-                        {% widthratio fila.total total_gastos 100 as porcentaje %}
                         <li class="{{ fila.categoria__nombre|clase_categoria }}">
                             <div class="barras__cabeza">
                                 <span class="barras__nombre"><span class="leyenda__punto" aria-hidden="true"></span>{{ fila.categoria__nombre }}</span>
-                                <span class="barras__valor">{{ fila.total|moneda }}<span class="barras__porcentaje">{% if porcentaje == "0" %}&lt; 1 %{% else %}{{ porcentaje }} %{% endif %}</span></span>
+                                <span class="barras__valor">{{ fila.total|moneda }}<span class="barras__porcentaje">{{ fila.total|porcentaje:total_gastos }}</span></span>
                             </div>
                             <div class="barras__pista" aria-hidden="true">
-                                <div class="barras__relleno" style="--valor: {{ porcentaje }}%"></div>
+                                <div class="barras__relleno" style="--valor: {% widthratio fila.total total_gastos 100 %}%"></div>
                             </div>
                         </li>
                         {% endfor %}
@@ -290,7 +271,7 @@
                     {% else %}
                     <div class="vacio vacio--compacto">
                         <span class="vacio__icono">{% icono 'torta' 'icono--lg' %}</span>
-                        <p class="vacio__titulo">Sin datos todavía</p>
+                        <p class="vacio__titulo">Aún no hay datos</p>
                         <p class="vacio__texto">Cuando registres gastos verás aquí cómo se reparten por categoría.</p>
                     </div>
                     {% endif %}

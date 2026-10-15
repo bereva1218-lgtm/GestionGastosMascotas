@@ -21,13 +21,13 @@
 <div class="barra-herramientas">
     <nav class="segmento" aria-label="Filtrar por estado">
         <a href="?estado=todas{% if q %}&amp;q={{ q|urlencode }}{% endif %}"{% if estado != 'activas' and estado != 'retiradas' %} aria-current="page"{% endif %}>
-            Todas <span class="segmento__conteo">{{ conteos.todas }}</span>
+            Todas <span class="segmento__conteo">{{ conteos.todas|floatformat:"g" }}</span>
         </a>
         <a href="?estado=activas{% if q %}&amp;q={{ q|urlencode }}{% endif %}"{% if estado == 'activas' %} aria-current="page"{% endif %}>
-            Activas <span class="segmento__conteo">{{ conteos.activas }}</span>
+            Activas <span class="segmento__conteo">{{ conteos.activas|floatformat:"g" }}</span>
         </a>
         <a href="?estado=retiradas{% if q %}&amp;q={{ q|urlencode }}{% endif %}"{% if estado == 'retiradas' %} aria-current="page"{% endif %}>
-            Retiradas <span class="segmento__conteo">{{ conteos.retiradas }}</span>
+            Retiradas <span class="segmento__conteo">{{ conteos.retiradas|floatformat:"g" }}</span>
         </a>
     </nav>
     <form method="get" class="buscador mascotas-buscador" role="search" aria-label="Buscar mascotas">
@@ -43,7 +43,7 @@
 {% if mascotas %}
     {% if q %}
     <p class="mascotas-resultado texto-sm texto-2" role="status">
-        {% with n=mascotas|length %}{{ n }} resultado{{ n|pluralize }} para «{{ q }}».{% endwith %}
+        {% with n=mascotas|length %}{{ n|floatformat:"g" }} resultado{{ n|pluralize }} para «{{ q }}».{% endwith %}
         <a href="{% url 'mascotas:mascota_lista' %}{% if estado == 'activas' or estado == 'retiradas' %}?estado={{ estado }}{% endif %}">Limpiar búsqueda</a>
     </p>
     {% endif %}
@@ -73,7 +73,7 @@
                     </div>
                     <div class="tarjeta-mascota__dato">
                         <dt class="estadistica__etiqueta">Gastos</dt>
-                        <dd>{{ mascota.num_gastos }}</dd>
+                        <dd>{{ mascota.num_gastos|floatformat:"g" }}</dd>
                     </div>
                 </dl>
             </a>
@@ -90,21 +90,21 @@
             <span class="vacio__icono">{% icono 'buscar' 'icono--lg' %}</span>
             <p class="vacio__titulo">Sin resultados para «{{ q }}»</p>
             <p class="vacio__texto">No hay mascotas {% if estado == 'activas' %}activas {% elif estado == 'retiradas' %}retiradas {% endif %}cuyo nombre contenga ese texto. Revisa la ortografía o prueba con otro nombre.</p>
-            <a class="btn btn--secundario" href="{% url 'mascotas:mascota_lista' %}">{% icono 'restaurar' %} Limpiar filtros</a>
+            <a class="btn btn--primario" href="{% url 'mascotas:mascota_lista' %}">{% icono 'restaurar' %} Limpiar filtros</a>
         </div>
         {% elif estado == 'retiradas' %}
         <div class="vacio">
             <span class="vacio__icono">{% icono 'archivar' 'icono--lg' %}</span>
-            <p class="vacio__titulo">No tienes mascotas retiradas</p>
-            <p class="vacio__texto">Cuando retires una mascota aparecerá aquí, con todo su historial de gastos intacto.</p>
-            <a class="btn btn--secundario" href="{% url 'mascotas:mascota_lista' %}">Ver todas las mascotas</a>
+            <p class="vacio__titulo">Sin resultados en «Retiradas»</p>
+            <p class="vacio__texto">No tienes mascotas retiradas. Cuando retires una, aparecerá aquí con todo su historial de gastos intacto.</p>
+            <a class="btn btn--primario" href="{% url 'mascotas:mascota_lista' %}">{% icono 'huella' %} Ver todas las mascotas</a>
         </div>
         {% else %}
         <div class="vacio">
             <span class="vacio__icono">{% icono 'huella' 'icono--lg' %}</span>
-            <p class="vacio__titulo">No tienes mascotas activas</p>
+            <p class="vacio__titulo">Sin resultados en «Activas»</p>
             <p class="vacio__texto">Todas tus mascotas están retiradas. Reactiva alguna desde su ficha o registra una nueva.</p>
-            <a class="btn btn--secundario" href="{% url 'mascotas:mascota_lista' %}">Ver todas las mascotas</a>
+            <a class="btn btn--primario" href="{% url 'mascotas:mascota_lista' %}">{% icono 'huella' %} Ver todas las mascotas</a>
         </div>
         {% endif %}
     </div>
@@ -113,9 +113,9 @@
     <div class="tarjeta">
         <div class="vacio">
             <span class="vacio__icono">{% icono 'huella' 'icono--lg' %}</span>
-            <p class="vacio__titulo">Aún no tienes mascotas</p>
+            <p class="vacio__titulo">Aún no hay mascotas</p>
             <p class="vacio__texto">Registra tu primera mascota para llevar el control de sus gastos, medicamentos y cuidados.</p>
-            <a class="btn btn--primario" href="{% url 'mascotas:mascota_crear' %}">{% icono 'plus' %} Registrar mascota</a>
+            <a class="btn btn--primario" href="{% url 'mascotas:mascota_crear' %}">{% icono 'plus' %} Nueva mascota</a>
         </div>
     </div>
 {% endif %}

@@ -39,6 +39,13 @@ class FormConUsuarioMixin:
         return {**super().get_form_kwargs(), 'usuario': self.request.user}
 
 
+class OriginalMixin:
+    """Expone el registro tal como está guardado: tras un POST inválido `object` trae datos sin guardar."""
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(original=type(self.object).objects.get(pk=self.object.pk), **kwargs)
+
+
 class EliminarConMensajeMixin:
     mensaje_eliminado = 'Registro eliminado.'
 
@@ -63,6 +70,10 @@ def medicamentos_activos_del(usuario):
 
 def promedio(total, cantidad):
     return (total / cantidad).quantize(Decimal('0.01')) if cantidad else Decimal('0')
+
+
+def tiene_mascotas_activas(usuario):
+    return usuario.mascotas.filter(activa=True).exists()
 
 
 def con_total_gastado(mascotas):
@@ -182,7 +193,7 @@ class MascotaCrear(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return super().form_valid(form)
 
 
-class MascotaEditar(DelUsuarioMixin, SuccessMessageMixin, UpdateView):
+class MascotaEditar(DelUsuarioMixin, OriginalMixin, SuccessMessageMixin, UpdateView):
     model = Mascota
     form_class = MascotaForm
     success_message = 'Mascota «%(nombre)s» actualizada.'
@@ -256,7 +267,7 @@ class GastoLista(LoginRequiredMixin, ListView):
             promedio=promedio(total, cantidad),
             filtrando=filtrando,
             filtros_aplicados=filtrando and self.filtro.is_valid(),
-            tiene_mascotas=self.request.user.mascotas.exists(),
+            tiene_mascotas=tiene_mascotas_activas(self.request.user),
             **kwargs,
         )
         pagina = contexto['page_obj']
@@ -275,7 +286,7 @@ class GastoCrear(LoginRequiredMixin, FormConUsuarioMixin, SuccessMessageMixin, C
         return {'fecha': timezone.localdate(), 'mascota': self.request.GET.get('mascota')}
 
 
-class GastoEditar(DelUsuarioMixin, FormConUsuarioMixin, SuccessMessageMixin, UpdateView):
+class GastoEditar(DelUsuarioMixin, OriginalMixin, FormConUsuarioMixin, SuccessMessageMixin, UpdateView):
     model = Gasto
     campo_usuario = 'mascota__usuario'
     form_class = GastoForm
@@ -311,7 +322,7 @@ class MedicamentoLista(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             historial=self.historial, conteos=self.conteos, por_terminar=self.por_terminar,
-            hoy=timezone.localdate(), **kwargs
+            tiene_mascotas=tiene_mascotas_activas(self.request.user), hoy=timezone.localdate(), **kwargs
         )
 
 
@@ -326,7 +337,7 @@ class MedicamentoCrear(LoginRequiredMixin, FormConUsuarioMixin, SuccessMessageMi
         return {'fecha_inicio': timezone.localdate(), 'mascota': self.request.GET.get('mascota')}
 
 
-class MedicamentoEditar(DelUsuarioMixin, FormConUsuarioMixin, SuccessMessageMixin, UpdateView):
+class MedicamentoEditar(DelUsuarioMixin, OriginalMixin, FormConUsuarioMixin, SuccessMessageMixin, UpdateView):
     model = Medicamento
     campo_usuario = 'mascota__usuario'
     form_class = MedicamentoForm
@@ -393,6 +404,8 @@ class Reportes(LoginRequiredMixin, TemplateView):
         grafico = grafico_mensual(mensual)[-MESES_GRAFICO_REPORTE:]
         total, cantidad = reportes.total(gastos), gastos.count()
         return super().get_context_data(
+            hoy=timezone.localdate(),
+            tiene_mascotas=tiene_mascotas_activas(self.request.user),
             rango=rango,
             presets=presets,
             filtrando=bool(desde or hasta),

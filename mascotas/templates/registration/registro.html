@@ -20,20 +20,13 @@
     <p>Empieza a registrar los gastos y cuidados de tus mascotas en menos de un minuto.</p>
 </header>
 
-{% if form.non_field_errors %}
+{% if form.errors %}
 <div class="alerta alerta--peligro" role="alert">
     {% icono 'alerta' %}
-    <div>
+    <div class="alerta__contenido">
         <strong class="alerta__titulo">No pudimos crear tu cuenta</strong>
         {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-    </div>
-</div>
-{% elif form.errors %}
-<div class="alerta alerta--peligro" role="alert">
-    {% icono 'alerta' %}
-    <div>
-        <strong class="alerta__titulo">Revisa los campos marcados</strong>
-        <p>Corrige los datos resaltados para terminar tu registro.</p>
+        <ul class="alerta__lista">{% for campo in form.visible_fields %}{% if campo.errors %}<li><a href="#{{ campo.id_for_label }}">{{ campo.label }}</a>: {{ campo.errors|first }}</li>{% endif %}{% endfor %}</ul>
     </div>
 </div>
 {% endif %}

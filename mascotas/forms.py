@@ -18,6 +18,11 @@ MENSAJES_POR_TIPO = {
 }
 
 
+def etiqueta_mascota(mascota):
+    """Nombre de la mascota en listas desplegables, marcando las retiradas."""
+    return mascota.nombre if mascota.activa else f'{mascota.nombre} (retirada)'
+
+
 class MensajesEnTuMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -70,6 +75,7 @@ class MascotaDelUsuarioMixin:
             visibles |= Q(pk=self.instance.mascota_id)
         self.fields['mascota'].queryset = Mascota.objects.filter(visibles, usuario=usuario)
         self.fields['mascota'].empty_label = 'Selecciona una mascota'
+        self.fields['mascota'].label_from_instance = etiqueta_mascota
 
 
 class GastoForm(MascotaDelUsuarioMixin, MensajesEnTuMixin, forms.ModelForm):
@@ -151,6 +157,7 @@ class GastoFiltroForm(RangoFechasForm):
         super().__init__(*args, **kwargs)
         # Incluye retiradas: su historial sigue siendo consultable.
         self.fields['mascota'].queryset = Mascota.objects.filter(usuario=usuario)
+        self.fields['mascota'].label_from_instance = etiqueta_mascota
 
     def filtrar(self, gastos):
         gastos = super().filtrar(gastos)

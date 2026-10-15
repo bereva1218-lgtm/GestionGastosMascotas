@@ -16,14 +16,16 @@
     {% icono 'alerta' %}
     <div class="alerta__contenido">
         <strong class="alerta__titulo">No pudimos iniciar sesión</strong>
-        {% for error in form.non_field_errors %}<p>{{ error }}</p>
-        {% endfor %}
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
     </div>
 </div>
 {% elif next and next != url_inicio %}
 <div class="alerta alerta--info" role="status">
     {% icono 'candado' %}
-    <p>Inicia sesión para continuar. Te llevaremos a la página que querías ver.</p>
+    <div class="alerta__contenido">
+        <strong class="alerta__titulo">La página que buscas requiere una sesión</strong>
+        <p>Ingresa y te llevaremos directo a ella.</p>
+    </div>
 </div>
 {% endif %}
 

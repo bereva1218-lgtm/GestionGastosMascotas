@@ -74,7 +74,7 @@ bandeja actividad tienda hash gota palette macho hembra`.
 </header>
 ```
 
-**Migas** (en `{% block migas %}`; "Inicio" ya está en la base):
+**Migas** (en `{% block migas %}`; la raíz "Panel" ya está en la base, y en el propio panel la base ignora el bloque):
 `<li><a href="{% url 'mascotas:mascota_lista' %}">Mascotas</a></li><li><span aria-current="page">Michi</span></li>`
 
 **Botones:** `btn` + `btn--primario` (una acción principal por zona), `btn--secundario`,
@@ -158,15 +158,19 @@ los valores visibles.
 ## Reglas
 
 1. Sin colores sueltos ni `style=""` en plantillas, salvo `--valor` de gráficos.
-2. Toda vista: `{% block titulo %}`, `{% block migas %}`, `.pagina-encabezado`.
-3. Dinero siempre con `|moneda`; fechas en tablas `d M Y`, en fichas `j \d\e F \d\e Y`.
+2. Toda vista: `{% block titulo %}` (igual al h1), `{% block migas %}` (salvo el panel) y `.pagina-encabezado`.
+3. Dinero siempre con `|moneda`; fechas en tablas `d M Y`, en fichas y frases `|fecha_larga`.
 4. Textos en español, en tono claro y en "tú"; mayúscula solo al inicio.
 5. Las acciones destructivas usan `btn--peligro` y pasan por la página de confirmación.
 6. Una etiqueta por acción de crear, igual al título del formulario y siempre con `{% icono 'plus' %}`:
    **Nueva mascota**, **Nuevo gasto**, **Nuevo medicamento**.
-7. El atajo de la barra superior (`accion_barra`) solo aparece si el encabezado de la página no tiene ya esa acción.
-8. Encabezados de tarjeta: navegación con `btn--fantasma btn--sm` ("Ver todos"), crear con `btn--secundario btn--sm` + plus.
-9. Estados vacíos: título "Aún no hay …" cuando no hay datos y "Sin resultados …" cuando lo vacía un filtro;
+7. El atajo de la barra superior (`accion_barra`) solo aparece si la página no ofrece ya esa acción;
+   los formularios y las confirmaciones nunca lo muestran.
+8. Encabezados de tarjeta: navegación con `btn--fantasma btn--sm` ("Ver todos", con `aria-label` que diga a dónde lleva;
+   "Ver reportes" en la tendencia del panel), crear con `btn--secundario btn--sm` + plus.
+9. Estados vacíos: título "Aún no hay …" cuando no hay datos (también "Aún no hay mascotas activas" /
+   "Aún no hay tratamientos en curso" si solo hay retirados o finalizados) y "Sin resultados …" cuando lo vacía un filtro;
+   si la acción exige una mascota activa y no la hay, el botón es "Nueva mascota";
    botón `btn--primario` en `.vacio` y `btn--primario btn--sm` en `.vacio--compacto`.
 10. `kpi__valor--md` solo para valores de texto (p. ej. una categoría); las cifras van a tamaño completo.
 11. Conteos visibles con `|floatformat:"g"` (1.234); cantidades decimales con `|floatformat:"-2g"`.
