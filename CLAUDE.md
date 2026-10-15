@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Django web app for tracking pet characteristics and the expenses of caring for them (medicines, food, toys). Initial scope is cats, but the model must allow other species. All docs, requirements and (by convention) domain naming are in **Spanish** — keep models, fields, templates and user messages in Spanish.
 
-Current state: domain app `mascotas` has models, migrations (0002 seeds categories), admin and business-rule tests; no forms/views/templates yet. Architecture: `Context/Arquitectura.md`. Progress log: `Memory.md` — append an entry after each significant change. The functional spec lives in `Context/` and should be read before implementing features:
+Current state: domain app `mascotas` is functional — models, migrations (0002 seeds categories, 0003 makes `Mascota.usuario` PROTECT), pure rules in `reglas.py`, forms, CBV views, templates, auth (`/registro/`, `/cuentas/login/`), reports (`reportes.py`) and tests (`tests.py`, `test_*.py`). `entrega/` holds the TPA parcial 2 (TDD) deliverable and evidence. Architecture: `Context/Arquitectura.md`. Progress log: `Memory.md` — append an entry after each significant change. The functional spec lives in `Context/` and should be read before implementing features:
 
 - `Context/Entorno.md` — purpose, tech stack, components, numbered functional requirements.
 - `Context/Modulos.md` — modules (usuarios, mascotas, gastos, medicamentos, reportes) and their features.
@@ -23,6 +23,7 @@ pip install -r requirements.txt
 python manage.py runserver
 python manage.py makemigrations && python manage.py migrate
 python manage.py createsuperuser
+python manage.py datos_demo                     # dev data: users demo/otro (password in the command file)
 python manage.py test                           # all tests
 python manage.py test mascotas.tests.ReglasDeNegocioTests.test_total_es_cantidad_por_valor_unitario  # single test
 ```
@@ -31,7 +32,13 @@ No linter/formatter is configured.
 
 ## Architecture
 
-Project package: `gestion_gastos_mascotas/` (settings, root `urls.py`). Domain models live in `mascotas/` (its urls not yet included from the root `urls.py`). `gastoMascota/` is a teammate's practice app with demo views (`/`, `/cm/`, `/objeto/`) wired directly in the root `urls.py`; its templates are in `gestion_gastos_mascotas/templates/` (`TEMPLATES.DIRS`). App templates use `APP_DIRS=True`.
+Project package: `gestion_gastos_mascotas/` (settings, root `urls.py` → `admin/`, `cuentas/` = `django.contrib.auth.urls`, `''` = `mascotas.urls`). Everything else lives in the single domain app `mascotas/` (namespace `mascotas`):
+
+- `reglas.py` — pure business rules, no DB (`calcular_valor_total`, `total_mensual`); `Gasto.save()` delegates to it.
+- `reportes.py` — aggregations over an already user-scoped `Gasto` queryset.
+- `views.py` — CBVs; `DelUsuarioMixin` = login required + `get_queryset` filtered by `campo_usuario` (`usuario` or `mascota__usuario`), so foreign records 404. `FormConUsuarioMixin` passes `usuario` to forms.
+- `forms.py` — `GastoForm`/`MedicamentoForm` take `usuario=` and limit `mascota` to the user's active pets.
+- Templates in `mascotas/templates/` (`base.html` renders `messages`); CSS in `mascotas/static/mascotas/`.
 
 Entities (`Context/Aplicacion.md`):
 
@@ -51,4 +58,4 @@ Business rules that shape the models/views:
 - Show a success/error message (Django `messages` framework) after every operation.
 - Reports: totals per pet, per category, monthly, and by date range.
 
-Remaining build order: forms/validation → CRUD views → filters and summaries → auth/permission scoping.
+Remaining work: user profile editing and the "evolución posterior" items in `Context/funcionalidades.md`. Tests create users without a password and use `force_login` (avoids slow hashing).

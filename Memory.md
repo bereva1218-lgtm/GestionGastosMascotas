@@ -14,7 +14,8 @@ venv\Scripts\activate          # Windows
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py createsuperuser
-python manage.py runserver     # http://127.0.0.1:8000/admin/
+python manage.py datos_demo    # opcional: usuarios demo/otro con datos
+python manage.py runserver     # http://127.0.0.1:8000/
 python manage.py test
 ```
 
@@ -60,11 +61,40 @@ Decisiones:
 - Pendiente decidir en equipo: unificar las vistas en `mascotas` o mantener
   `gastoMascota` para la interfaz.
 
+### 2026-10-15 — Parcial 2 TPA (TDD) y aplicación completa
+
+- Repositorio git inicializado; cada fase quedó en su propio commit.
+- **Parcial:** regla `total_mensual(gastos, anio, mes)` en `mascotas/reglas.py`
+  con 5 pruebas en `mascotas/test_reglas.py`, escritas antes del código.
+  Ciclo rojo → verde → refactor con evidencias en `entrega/evidencias/` y hoja
+  de entrega en `entrega/Parcial2_TDD.md`.
+- **Refactor (responsabilidad única):** el cálculo del total salió de
+  `Gasto.save()` a `reglas.calcular_valor_total()`.
+- Se retiró la app de práctica `gastoMascota`; la interfaz vive en `mascotas`.
+- `Mascota.usuario` pasa a `PROTECT` (migración 0003): borrar un usuario no
+  debe borrar historial financiero.
+- Registro e inicio de sesión (`/registro/`, `/cuentas/login/`).
+- CRUD de mascotas (con retirar/reactivar), gastos y medicamentos; filtros de
+  gastos por mascota, categoría y rango con total filtrado; reportes por
+  mascota, categoría, mes y productos; el inicio muestra el total del mes con
+  `total_mensual`.
+- Comando `datos_demo` para probar localmente.
+- 44 pruebas, todas pasan.
+
+Decisiones:
+
+- **Reglas puras en `reglas.py`** y **consultas en `reportes.py`**: separar
+  cálculo, consulta y presentación facilita probar y reutilizar.
+- **Eliminar vs. retirar:** eliminar solo se permite sin historial; si hay
+  gastos o medicamentos se muestra un error y se sugiere retirar.
+- Los formularios solo ofrecen mascotas activas del usuario; el filtro de
+  gastos incluye las retiradas para consultar su historial.
+- Las pruebas crean usuarios sin contraseña y usan `force_login` (sin el costo
+  de calcular hashes).
+
 ## Próximos pasos
 
-1. Formularios (`ModelForm`) para mascotas, gastos y medicamentos.
-2. Vistas CRUD con login obligatorio, filtradas por `request.user`.
-3. Plantillas HTML + CSS y mensajes de confirmación o error.
-4. Filtros de gastos por mascota, categoría y rango de fechas.
-5. Reportes: totales por mascota, por categoría y por mes.
-6. Registro e inicio de sesión de usuarios.
+1. Edición de datos básicos del usuario (módulo de usuarios).
+2. Evolución posterior: alertas de medicamentos por terminar, presupuesto
+   mensual por mascota, adjuntar facturas y exportar reportes a CSV/PDF.
+3. Antes de desplegar: mover `SECRET_KEY` a variable de entorno y `DEBUG=False`.
