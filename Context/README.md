@@ -11,3 +11,4 @@ gestión de gastos para mascotas.
 - [Funcionalidades](funcionalidades.md)
 - [Aplicación](Aplicacion.md)
 - [Arquitectura](Arquitectura.md)
+- [Diseño de la interfaz](DisenoUI.md)

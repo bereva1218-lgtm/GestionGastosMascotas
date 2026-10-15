@@ -5,6 +5,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 
 from .reglas import calcular_valor_total
 
@@ -104,3 +105,14 @@ class Medicamento(models.Model):
 
     def __str__(self):
         return f'{self.nombre} - {self.mascota}'
+
+    @property
+    def dias_restantes(self):
+        """Días hasta `fecha_fin` (negativo si ya terminó); None si no tiene fin."""
+        if self.fecha_fin is None:
+            return None
+        return (self.fecha_fin - timezone.localdate()).days
+
+    @property
+    def activo(self):
+        return self.fecha_fin is None or self.dias_restantes >= 0

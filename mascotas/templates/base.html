@@ -1,38 +1,70 @@
-{% load static %}<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block titulo %}Gastos de Mascotas{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'mascotas/estilos.css' %}">
-</head>
-<body>
-    <header class="barra">
-        <a class="marca" href="{% url 'mascotas:inicio' %}">🐾 Gastos de Mascotas</a>
-        {% if user.is_authenticated %}
-        <nav>
-            <a href="{% url 'mascotas:mascota_lista' %}">Mascotas</a>
-            <a href="{% url 'mascotas:gasto_lista' %}">Gastos</a>
-            <a href="{% url 'mascotas:medicamento_lista' %}">Medicamentos</a>
-            <a href="{% url 'mascotas:reportes' %}">Reportes</a>
-            <form method="post" action="{% url 'logout' %}" class="en-linea">
-                {% csrf_token %}
-                <button type="submit" class="enlace">Salir ({{ user.username }})</button>
-            </form>
+{% extends 'base_documento.html' %}
+{% load ui %}
+
+{% block cuerpo %}
+{% seccion_actual as seccion %}
+<a class="oculto-visual saltar" href="#contenido">Saltar al contenido</a>
+<div class="app" data-app>
+    <aside class="lateral" id="menu-lateral" aria-label="Navegación principal">
+        <a class="lateral__marca" href="{% url 'mascotas:inicio' %}">
+            <span class="logo">{% icono 'huella' %}</span>
+            <span class="lateral__nombre"><strong>Gastos de Mascotas</strong><span>Gestión y control</span></span>
+        </a>
+        <nav class="lateral__nav">
+            <div class="lateral__grupo">
+                <p class="lateral__titulo">General</p>
+                <a class="lateral__enlace" href="{% url 'mascotas:inicio' %}"{% if seccion == 'inicio' %} aria-current="page"{% endif %}>{% icono 'inicio' %} Panel</a>
+            </div>
+            <div class="lateral__grupo">
+                <p class="lateral__titulo">Gestión</p>
+                <a class="lateral__enlace" href="{% url 'mascotas:mascota_lista' %}"{% if seccion == 'mascota' %} aria-current="page"{% endif %}>{% icono 'huella' %} Mascotas</a>
+                <a class="lateral__enlace" href="{% url 'mascotas:gasto_lista' %}"{% if seccion == 'gasto' %} aria-current="page"{% endif %}>{% icono 'recibo' %} Gastos</a>
+                <a class="lateral__enlace" href="{% url 'mascotas:medicamento_lista' %}"{% if seccion == 'medicamento' %} aria-current="page"{% endif %}>{% icono 'pastilla' %} Medicamentos</a>
+            </div>
+            <div class="lateral__grupo">
+                <p class="lateral__titulo">Análisis</p>
+                <a class="lateral__enlace" href="{% url 'mascotas:reportes' %}"{% if seccion == 'reportes' %} aria-current="page"{% endif %}>{% icono 'grafico' %} Reportes</a>
+            </div>
         </nav>
-        {% endif %}
-    </header>
+        <div class="lateral__pie">
+            <div class="usuario-tarjeta">
+                <span class="avatar avatar--sm {{ user|tono }}">{{ user.username|inicial }}</span>
+                <span class="usuario-tarjeta__datos">
+                    <span class="usuario-tarjeta__nombre truncar">{{ user.get_full_name|default:user.username }}</span>
+                    <span class="usuario-tarjeta__rol">{% if user.is_staff %}Administrador{% else %}Propietario{% endif %}</span>
+                </span>
+                <form method="post" action="{% url 'logout' %}" class="form-en-linea">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn--icono btn--sm" aria-label="Cerrar sesión" title="Cerrar sesión">{% icono 'salir' 'icono--sm' %}</button>
+                </form>
+            </div>
+        </div>
+    </aside>
+    <div class="capa-menu" data-cerrar-menu></div>
 
-    <main class="contenido">
-        {% if messages %}
-        <ul class="mensajes">
-            {% for mensaje in messages %}
-            <li class="mensaje {{ mensaje.tags }}">{{ mensaje }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
+    <div class="principal">
+        <header class="barra-superior">
+            <button type="button" class="btn btn--icono btn--fantasma barra-superior__menu" data-abrir-menu aria-controls="menu-lateral" aria-expanded="false" aria-label="Abrir menú">{% icono 'menu' %}</button>
+            <nav class="migas" aria-label="Ruta de navegación">
+                <ol>
+                    <li><a href="{% url 'mascotas:inicio' %}">Inicio</a></li>
+                    {% block migas %}{% endblock %}
+                </ol>
+            </nav>
+            <div class="barra-superior__acciones">
+                <button type="button" class="btn btn--icono btn--fantasma" data-cambiar-tema aria-label="Cambiar entre tema claro y oscuro" title="Cambiar tema">
+                    <span data-tema-icono="claro">{% icono 'luna' %}</span>
+                    <span data-tema-icono="oscuro" hidden>{% icono 'sol' %}</span>
+                </button>
+                {% block accion_barra %}
+                <a class="btn btn--primario btn--sm" href="{% url 'mascotas:gasto_crear' %}">{% icono 'plus' 'icono--sm' %}<span class="barra-superior__texto-btn">Registrar gasto</span></a>
+                {% endblock %}
+            </div>
+        </header>
 
-        {% block contenido %}{% endblock %}
-    </main>
-</body>
-</html>
+        <main class="contenido" id="contenido" tabindex="-1">
+            {% block contenido %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}

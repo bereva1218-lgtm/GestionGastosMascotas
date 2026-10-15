@@ -1,0 +1,28 @@
+{% extends 'base_documento.html' %}
+{% load ui %}
+{# Layout de las páginas sin sesión (acceso y registro): panel de marca + formulario. #}
+
+{% block cuerpo %}
+<div class="auth">
+    <section class="auth__panel" aria-label="Gastos de Mascotas">
+        <div class="auth__marca"><span class="logo">{% icono 'huella' %}</span> Gastos de Mascotas</div>
+        <div>
+            {% block panel %}
+            <h2 class="auth__titular">Controla cada peso invertido en el cuidado de tus mascotas.</h2>
+            <p class="auth__bajada">Registra comida, medicamentos y juguetes, y descubre cuánto cuesta realmente cuidar a cada uno.</p>
+            <ul class="auth__puntos">
+                <li><span class="icono-circulo">{% icono 'recibo' %}</span><span><strong>Gastos ordenados</strong>Por mascota, categoría y fecha, con totales automáticos.</span></li>
+                <li><span class="icono-circulo">{% icono 'pastilla' %}</span><span><strong>Tratamientos al día</strong>Dosis, frecuencia y fechas de cada medicamento.</span></li>
+                <li><span class="icono-circulo">{% icono 'grafico' %}</span><span><strong>Reportes claros</strong>Resúmenes mensuales y por categoría para decidir mejor.</span></li>
+            </ul>
+            {% endblock %}
+        </div>
+        <p class="auth__pie">Universidad de San Buenaventura Cali · Ingeniería de Sistemas</p>
+    </section>
+    <main class="auth__formulario" id="contenido">
+        <div class="auth__caja">
+            {% block contenido %}{% endblock %}
+        </div>
+    </main>
+</div>
+{% endblock %}

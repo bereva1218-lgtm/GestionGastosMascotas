@@ -1,43 +1,242 @@
 {% extends 'base.html' %}
+{% load ui %}
+
+{% block titulo %}Panel{% endblock %}
+{% block migas %}<li><span aria-current="page">Panel</span></li>{% endblock %}
+
 {% block contenido %}
-<h1>Hola, {{ user.username }}</h1>
-
-<div class="indicadores">
-    <div class="indicador">
-        <span class="etiqueta">Gastado en {{ hoy|date:"F Y" }}</span>
-        <strong>$ {{ total_mes|floatformat:"2g" }}</strong>
+<header class="pagina-encabezado">
+    <div class="pagina-encabezado__texto">
+        <span class="pagina-encabezado__antetitulo">{{ hoy|date:"l, j \d\e F" }}</span>
+        <h1>Hola, {{ user.get_short_name|default:user.username }}</h1>
+        <p>Este es el resumen de gastos y cuidados de tus mascotas.</p>
     </div>
-    <div class="indicador">
-        <span class="etiqueta">Mascotas activas</span>
-        <strong>{{ mascotas|length }}</strong>
+    <div class="pagina-encabezado__acciones">
+        <a class="btn btn--secundario" href="{% url 'mascotas:mascota_crear' %}">{% icono 'huella' %} Nueva mascota</a>
+        <a class="btn btn--primario" href="{% url 'mascotas:gasto_crear' %}">{% icono 'plus' %} Registrar gasto</a>
     </div>
-</div>
+</header>
 
-<div class="acciones">
-    <a class="boton" href="{% url 'mascotas:gasto_crear' %}">+ Registrar gasto</a>
-    <a class="boton secundario" href="{% url 'mascotas:mascota_crear' %}">+ Nueva mascota</a>
-    <a class="boton secundario" href="{% url 'mascotas:medicamento_crear' %}">+ Medicamento</a>
-</div>
-
-<section class="tarjeta">
-    <h2>Últimos gastos</h2>
-    {% if ultimos_gastos %}
-    <table>
-        <thead><tr><th>Fecha</th><th>Mascota</th><th>Producto</th><th>Categoría</th><th class="num">Total</th></tr></thead>
-        <tbody>
-        {% for gasto in ultimos_gastos %}
-            <tr>
-                <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
-                <td>{{ gasto.mascota }}</td>
-                <td>{{ gasto.producto }}</td>
-                <td>{{ gasto.categoria }}</td>
-                <td class="num">$ {{ gasto.valor_total|floatformat:"2g" }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p class="vacio">Aún no has registrado gastos.</p>
-    {% endif %}
+<section class="kpis" aria-label="Indicadores">
+    <article class="kpi">
+        <div class="kpi__cabeza">
+            <span class="kpi__etiqueta">Gastado en {{ hoy|date:"F" }}</span>
+            <span class="kpi__icono">{% icono 'billetera' %}</span>
+        </div>
+        <span class="kpi__valor">{{ total_mes|moneda }}</span>
+        <span class="kpi__meta">
+            {% if variacion is None %}
+                <span class="tendencia tendencia--neutra">Sin datos del mes anterior</span>
+            {% elif variacion > 0 %}
+                <span class="tendencia tendencia--sube">{% icono 'sube' %} {{ variacion }} %</span> frente a {{ total_mes_anterior|moneda }}
+            {% elif variacion < 0 %}
+                <span class="tendencia tendencia--baja">{% icono 'baja' %} {{ variacion|absoluto }} %</span> frente a {{ total_mes_anterior|moneda }}
+            {% else %}
+                <span class="tendencia tendencia--neutra">Igual que el mes anterior</span>
+            {% endif %}
+        </span>
+    </article>
+    <article class="kpi">
+        <div class="kpi__cabeza">
+            <span class="kpi__etiqueta">Acumulado {{ hoy|date:"Y" }}</span>
+            <span class="kpi__icono kpi__icono--info">{% icono 'grafico' %}</span>
+        </div>
+        <span class="kpi__valor">{{ total_anio|moneda }}</span>
+        <span class="kpi__meta">Desde el 1 de enero</span>
+    </article>
+    <article class="kpi">
+        <div class="kpi__cabeza">
+            <span class="kpi__etiqueta">Mascotas activas</span>
+            <span class="kpi__icono kpi__icono--juguetes">{% icono 'huella' %}</span>
+        </div>
+        <span class="kpi__valor">{{ mascotas|length }}</span>
+        <span class="kpi__meta"><a href="{% url 'mascotas:mascota_lista' %}">Ver todas</a></span>
+    </article>
+    <article class="kpi">
+        <div class="kpi__cabeza">
+            <span class="kpi__etiqueta">Tratamientos en curso</span>
+            <span class="kpi__icono kpi__icono--aviso">{% icono 'pastilla' %}</span>
+        </div>
+        <span class="kpi__valor">{{ conteo_tratamientos }}</span>
+        <span class="kpi__meta"><a href="{% url 'mascotas:medicamento_lista' %}">Ver medicamentos</a></span>
+    </article>
 </section>
+
+<div class="rejilla-panel">
+    <section class="tarjeta" aria-labelledby="titulo-tendencia">
+        <header class="tarjeta__encabezado">
+            <div>
+                <h2 class="tarjeta__titulo" id="titulo-tendencia">{% icono 'actividad' %} Tendencia de gastos</h2>
+                <p class="tarjeta__subtitulo">Últimos 6 meses</p>
+            </div>
+            <a class="btn btn--fantasma btn--sm" href="{% url 'mascotas:reportes' %}">Ver reportes {% icono 'derecha' 'icono--sm' %}</a>
+        </header>
+        <div class="tarjeta__cuerpo">
+            <div class="grafico-columnas" role="img" aria-label="Gasto mensual de los últimos 6 meses">
+                {% for punto in tendencia %}
+                <div class="grafico-columnas__item{% if forloop.last %} grafico-columnas__item--actual{% endif %}">
+                    <div class="grafico-columnas__pista">
+                        <div class="grafico-columnas__barra" style="--valor: {% widthratio punto.total max_tendencia 100 %}%">
+                            {% if punto.total %}<span class="grafico-columnas__valor">{{ punto.total|moneda }}</span>{% endif %}
+                        </div>
+                    </div>
+                    <span class="grafico-columnas__etiqueta">{{ punto.fecha|date:"M" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <table class="oculto-visual">
+                <caption>Gasto por mes</caption>
+                <tbody>{% for punto in tendencia %}<tr><th scope="row">{{ punto.fecha|date:"F Y" }}</th><td>{{ punto.total|moneda }}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="tarjeta" aria-labelledby="titulo-distribucion">
+        <header class="tarjeta__encabezado">
+            <div>
+                <h2 class="tarjeta__titulo" id="titulo-distribucion">{% icono 'torta' %} Distribución del mes</h2>
+                <p class="tarjeta__subtitulo">Por categoría</p>
+            </div>
+        </header>
+        <div class="tarjeta__cuerpo">
+            {% if por_categoria_mes %}
+            <div class="pila">
+                <div class="barra-apilada" aria-hidden="true">
+                    {% for fila in por_categoria_mes %}<span class="barra-apilada__segmento {{ fila.categoria__nombre|clase_categoria }}" style="--valor: {% widthratio fila.total total_mes 100 %}%"></span>{% endfor %}
+                </div>
+                <ul class="leyenda">
+                    {% for fila in por_categoria_mes %}
+                    <li class="leyenda__fila {{ fila.categoria__nombre|clase_categoria }}">
+                        <span class="leyenda__punto"></span>
+                        <span>{{ fila.categoria__nombre }}</span>
+                        <span class="texto-tenue texto-xs">{% widthratio fila.total total_mes 100 %} %</span>
+                        <span class="leyenda__valor">{{ fila.total|moneda }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% else %}
+            <div class="vacio vacio--compacto">
+                <span class="vacio__icono">{% icono 'torta' 'icono--lg' %}</span>
+                <p class="vacio__titulo">Sin gastos este mes</p>
+                <p class="vacio__texto">Cuando registres gastos verás aquí cómo se reparten.</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<div class="rejilla-panel seccion">
+    <section class="tarjeta" aria-labelledby="titulo-ultimos">
+        <header class="tarjeta__encabezado">
+            <h2 class="tarjeta__titulo" id="titulo-ultimos">{% icono 'recibo' %} Últimos gastos</h2>
+            <a class="btn btn--fantasma btn--sm" href="{% url 'mascotas:gasto_lista' %}">Ver todos {% icono 'derecha' 'icono--sm' %}</a>
+        </header>
+        {% if ultimos_gastos %}
+        <div class="tabla-contenedor">
+            <table class="tabla tabla--apilable">
+                <thead>
+                    <tr><th scope="col">Producto</th><th scope="col">Mascota</th><th scope="col">Categoría</th><th scope="col">Fecha</th><th scope="col" class="num">Total</th></tr>
+                </thead>
+                <tbody>
+                    {% for gasto in ultimos_gastos %}
+                    <tr>
+                        <td data-label="Producto">
+                            <div class="celda-principal">
+                                <span class="icono-circulo {{ gasto.categoria|clase_categoria }}">{% icono 'paquete' 'icono--sm' %}</span>
+                                <span class="celda-principal__texto">
+                                    <a class="celda-principal__titulo" href="{% url 'mascotas:gasto_editar' gasto.pk %}">{{ gasto.producto }}</a>
+                                    {% if gasto.proveedor %}<span class="celda-principal__sub">{{ gasto.proveedor }}</span>{% endif %}
+                                </span>
+                            </div>
+                        </td>
+                        <td data-label="Mascota">{{ gasto.mascota }}</td>
+                        <td data-label="Categoría"><span class="insignia {{ gasto.categoria|clase_categoria }}">{{ gasto.categoria }}</span></td>
+                        <td data-label="Fecha" class="num texto-2">{{ gasto.fecha|date:"d M Y" }}</td>
+                        <td data-label="Total" class="num fuerte">{{ gasto.valor_total|moneda }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="vacio">
+            <span class="vacio__icono">{% icono 'recibo' 'icono--lg' %}</span>
+            <p class="vacio__titulo">Aún no hay gastos</p>
+            <p class="vacio__texto">Registra la primera compra de comida, medicamentos o juguetes.</p>
+            <a class="btn btn--primario" href="{% url 'mascotas:gasto_crear' %}">{% icono 'plus' %} Registrar gasto</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <div class="pila pila--lg">
+        <section class="tarjeta" aria-labelledby="titulo-tratamientos">
+            <header class="tarjeta__encabezado">
+                <h2 class="tarjeta__titulo" id="titulo-tratamientos">{% icono 'pastilla' %} Tratamientos en curso</h2>
+                <a class="btn btn--fantasma btn--sm" href="{% url 'mascotas:medicamento_lista' %}">Ver {% icono 'derecha' 'icono--sm' %}</a>
+            </header>
+            {% if medicamentos_activos %}
+            <ul class="lista">
+                {% for medicamento in medicamentos_activos %}
+                <li>
+                    <a class="lista__item lista__item--enlace" href="{% url 'mascotas:medicamento_editar' medicamento.pk %}">
+                        <span class="icono-circulo cat-medicamentos">{% icono 'pastilla' 'icono--sm' %}</span>
+                        <span class="lista__texto">
+                            <span class="lista__titulo truncar">{{ medicamento.nombre }}</span>
+                            <span class="lista__sub truncar">{{ medicamento.mascota }} · {{ medicamento.dosis }} · {{ medicamento.frecuencia }}</span>
+                        </span>
+                        {% if medicamento.dias_restantes is None %}
+                        <span class="insignia insignia--info">Continuo</span>
+                        {% elif medicamento.dias_restantes == 0 %}
+                        <span class="insignia insignia--aviso">Termina hoy</span>
+                        {% elif medicamento.dias_restantes <= 3 %}
+                        <span class="insignia insignia--aviso">{{ medicamento.dias_restantes }} día{{ medicamento.dias_restantes|pluralize }}</span>
+                        {% else %}
+                        <span class="insignia insignia--exito">{{ medicamento.dias_restantes }} días</span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="vacio vacio--compacto">
+                <span class="vacio__icono">{% icono 'pastilla' 'icono--lg' %}</span>
+                <p class="vacio__titulo">Sin tratamientos activos</p>
+            </div>
+            {% endif %}
+        </section>
+
+        <section class="tarjeta" aria-labelledby="titulo-mascotas">
+            <header class="tarjeta__encabezado">
+                <h2 class="tarjeta__titulo" id="titulo-mascotas">{% icono 'huella' %} Mis mascotas</h2>
+                <a class="btn btn--fantasma btn--sm" href="{% url 'mascotas:mascota_crear' %}">{% icono 'plus' 'icono--sm' %} Agregar</a>
+            </header>
+            {% if mascotas %}
+            <ul class="lista">
+                {% for mascota in mascotas %}
+                <li>
+                    <a class="lista__item lista__item--enlace" href="{{ mascota.get_absolute_url }}">
+                        <span class="avatar avatar--sm {{ mascota|tono }}">{{ mascota.nombre|inicial }}</span>
+                        <span class="lista__texto">
+                            <span class="lista__titulo">{{ mascota.nombre }}</span>
+                            <span class="lista__sub">{{ mascota.especie }}{% if mascota.raza %} · {{ mascota.raza }}{% endif %}</span>
+                        </span>
+                        <span class="lista__extremo">
+                            <span class="fuerte">{{ mascota.total_gastado|moneda }}</span><br>
+                            <span class="texto-tenue texto-xs">{{ mascota.num_gastos }} gasto{{ mascota.num_gastos|pluralize }}</span>
+                        </span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="vacio vacio--compacto">
+                <span class="vacio__icono">{% icono 'huella' 'icono--lg' %}</span>
+                <p class="vacio__titulo">Registra tu primera mascota</p>
+                <a class="btn btn--primario btn--sm" href="{% url 'mascotas:mascota_crear' %}">{% icono 'plus' 'icono--sm' %} Nueva mascota</a>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
 {% endblock %}

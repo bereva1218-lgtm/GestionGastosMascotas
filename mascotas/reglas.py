@@ -27,3 +27,32 @@ def total_mensual(gastos, anio, mes):
         (g.valor_total for g in gastos if es_del_mes(g.fecha, anio, mes)),
         Decimal('0'),
     )
+
+
+def variacion_porcentual(actual, anterior):
+    """Cambio porcentual de `anterior` a `actual`, con un decimal. None si no hay base."""
+    if not anterior:
+        return None
+    return ((actual - anterior) * 100 / anterior).quantize(Decimal('0.1'))
+
+
+def ultimos_meses(hoy, cantidad):
+    """Los `cantidad` meses que terminan en el de `hoy`, como (año, mes) en orden cronológico."""
+    if cantidad < 1:
+        raise ValueError('La cantidad de meses debe ser al menos 1.')
+    actual = hoy.year * 12 + hoy.month - 1  # meses contados desde el año 0
+    meses = []
+    for indice in range(actual - cantidad + 1, actual + 1):
+        anio, mes = divmod(indice, 12)
+        meses.append((anio, mes + 1))
+    return meses
+
+
+def calcular_edad(nacimiento, hoy):
+    """Edad cumplida como (años, meses)."""
+    if nacimiento > hoy:
+        raise ValueError('La fecha de nacimiento no puede ser futura.')
+    meses = (hoy.year - nacimiento.year) * 12 + hoy.month - nacimiento.month
+    if hoy.day < nacimiento.day:
+        meses -= 1
+    return divmod(meses, 12)

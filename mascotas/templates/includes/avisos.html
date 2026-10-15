@@ -1,0 +1,11 @@
+{% load ui %}{% if messages %}
+<ul class="avisos" aria-live="polite">
+    {% for mensaje in messages %}
+    <li class="aviso aviso--{{ mensaje.level_tag|default:'info' }}" role="{% if mensaje.level_tag == 'error' %}alert{% else %}status{% endif %}" data-aviso>
+        <span class="aviso__icono">{% if mensaje.level_tag == 'success' %}{% icono 'check' %}{% elif mensaje.level_tag == 'error' or mensaje.level_tag == 'warning' %}{% icono 'alerta' %}{% else %}{% icono 'info' %}{% endif %}</span>
+        <p class="aviso__texto">{{ mensaje }}</p>
+        <button type="button" class="btn btn--icono btn--fantasma btn--sm" data-cerrar-aviso aria-label="Cerrar mensaje">{% icono 'cerrar' 'icono--sm' %}</button>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}

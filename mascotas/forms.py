@@ -88,12 +88,16 @@ class RangoFechasForm(forms.Form):
 
 
 class GastoFiltroForm(RangoFechasForm):
+    q = forms.CharField(
+        label='Buscar', required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Producto o proveedor', 'type': 'search'}),
+    )
     mascota = forms.ModelChoiceField(queryset=Mascota.objects.none(), required=False, empty_label='Todas')
     categoria = forms.ModelChoiceField(
         queryset=CategoriaGasto.objects.all(), required=False, empty_label='Todas', label='Categoría'
     )
 
-    field_order = ['mascota', 'categoria', 'desde', 'hasta']
+    field_order = ['q', 'mascota', 'categoria', 'desde', 'hasta']
 
     def __init__(self, *args, usuario, **kwargs):
         super().__init__(*args, **kwargs)
@@ -102,6 +106,9 @@ class GastoFiltroForm(RangoFechasForm):
 
     def filtrar(self, gastos):
         gastos = super().filtrar(gastos)
+        if self.cleaned_data.get('q'):
+            texto = self.cleaned_data['q']
+            gastos = gastos.filter(Q(producto__icontains=texto) | Q(proveedor__icontains=texto))
         for campo in ('mascota', 'categoria'):
             if self.cleaned_data.get(campo):
                 gastos = gastos.filter(**{campo: self.cleaned_data[campo]})

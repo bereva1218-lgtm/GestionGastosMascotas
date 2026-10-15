@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load ui %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<header class="pagina-encabezado"><div class="pagina-encabezado__texto"><h1>{{ titulo }}</h1></div></header>
+<form method="post" class="formulario" novalidate>
+    {% csrf_token %}
+    <section class="formulario__seccion">
+        <div class="formulario__seccion-texto"><h2>Datos</h2></div>
+        <div class="formulario__rejilla">{% for field in form %}{% campo field %}{% endfor %}</div>
+    </section>
+    <div class="formulario__acciones"><button type="submit" class="btn btn--primario">Guardar</button></div>
+</form>
+{% endblock %}
