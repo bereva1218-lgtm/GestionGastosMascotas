@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block titulo %}Reportes{% endblock %}
+{% block contenido %}
+<h1>Reportes</h1>
+
+<form method="get" class="filtros">
+    {{ rango.non_field_errors }}
+    {% for campo in rango %}
+    <label>{{ campo.label }} {{ campo }}</label>
+    {% endfor %}
+    <button type="submit" class="boton">Aplicar rango</button>
+    <a href="{% url 'mascotas:reportes' %}" class="boton secundario">Todo</a>
+</form>
+
+<div class="indicadores">
+    <div class="indicador">
+        <span class="etiqueta">Total del periodo</span>
+        <strong>$ {{ total|floatformat:"2g" }}</strong>
+    </div>
+</div>
+
+<div class="rejilla">
+    <section class="tarjeta">
+        <h2>Por mascota</h2>
+        <table>
+            {% for fila in por_mascota %}
+            <tr><td>{{ fila.mascota__nombre }}</td><td class="num">$ {{ fila.total|floatformat:"2g" }}</td></tr>
+            {% empty %}<tr><td class="vacio">Sin datos</td></tr>{% endfor %}
+        </table>
+    </section>
+
+    <section class="tarjeta">
+        <h2>Por categoría</h2>
+        <table>
+            {% for fila in por_categoria %}
+            <tr><td>{{ fila.categoria__nombre }}</td><td class="num">$ {{ fila.total|floatformat:"2g" }}</td></tr>
+            {% empty %}<tr><td class="vacio">Sin datos</td></tr>{% endfor %}
+        </table>
+    </section>
+
+    <section class="tarjeta">
+        <h2>Resumen mensual</h2>
+        <table>
+            {% for fila in mensual %}
+            <tr><td>{{ fila.mes|date:"F Y" }}</td><td class="num">{{ fila.cantidad }} gasto{{ fila.cantidad|pluralize }}</td><td class="num">$ {{ fila.total|floatformat:"2g" }}</td></tr>
+            {% empty %}<tr><td class="vacio">Sin datos</td></tr>{% endfor %}
+        </table>
+    </section>
+</div>
+
+<section class="tarjeta">
+    <h2>Productos registrados</h2>
+    <table>
+        <thead><tr><th>Producto</th><th>Categoría</th><th class="num">Veces</th><th class="num">Total</th></tr></thead>
+        <tbody>
+        {% for fila in productos %}
+            <tr><td>{{ fila.producto }}</td><td>{{ fila.categoria__nombre }}</td><td class="num">{{ fila.veces }}</td><td class="num">$ {{ fila.total|floatformat:"2g" }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="vacio">Sin datos</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block titulo %}Mascotas{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+    <h1>Mis mascotas</h1>
+    <a class="boton" href="{% url 'mascotas:mascota_crear' %}">+ Nueva mascota</a>
+</div>
+
+{% if mascotas %}
+<table>
+    <thead><tr><th>Nombre</th><th>Especie</th><th>Raza</th><th>Sexo</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for mascota in mascotas %}
+        <tr{% if not mascota.activa %} class="inactiva"{% endif %}>
+            <td><a href="{% url 'mascotas:mascota_detalle' mascota.pk %}">{{ mascota.nombre }}</a></td>
+            <td>{{ mascota.especie }}</td>
+            <td>{{ mascota.raza|default:"—" }}</td>
+            <td>{{ mascota.get_sexo_display }}</td>
+            <td>{% if mascota.activa %}Activa{% else %}Retirada{% endif %}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="vacio">No tienes mascotas registradas.</p>
+{% endif %}
+{% endblock %}

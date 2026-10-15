@@ -11,8 +11,8 @@ from .models import CategoriaGasto, Gasto, Mascota
 
 class ReportesTests(TestCase):
     def setUp(self):
-        self.ana = User.objects.create_user('ana', password='x')
-        beto = User.objects.create_user('beto', password='x')
+        self.ana = User.objects.create_user('ana')
+        beto = User.objects.create_user('beto')
         self.michi = Mascota.objects.create(usuario=self.ana, nombre='Michi', sexo='H')
         self.tom = Mascota.objects.create(usuario=self.ana, nombre='Tom', sexo='M')
         luna = Mascota.objects.create(usuario=beto, nombre='Luna', sexo='H')

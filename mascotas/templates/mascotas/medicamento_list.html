@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block titulo %}Medicamentos{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+    <h1>Medicamentos {% if historial %}· historial{% else %}activos{% endif %}</h1>
+    <a class="boton" href="{% url 'mascotas:medicamento_crear' %}">+ Medicamento</a>
+</div>
+
+<p class="pestanas">
+    <a href="{% url 'mascotas:medicamento_lista' %}"{% if not historial %} class="activa"{% endif %}>Activos</a>
+    <a href="?ver=historial"{% if historial %} class="activa"{% endif %}>Historial completo</a>
+</p>
+
+{% if medicamentos %}
+<table>
+    <thead><tr><th>Mascota</th><th>Nombre</th><th>Dosis</th><th>Frecuencia</th><th>Inicio</th><th>Fin</th><th></th></tr></thead>
+    <tbody>
+    {% for m in medicamentos %}
+        <tr>
+            <td>{{ m.mascota }}</td>
+            <td>{{ m.nombre }}</td>
+            <td>{{ m.dosis }}</td>
+            <td>{{ m.frecuencia }}</td>
+            <td>{{ m.fecha_inicio|date:"d/m/Y" }}</td>
+            <td>{{ m.fecha_fin|date:"d/m/Y"|default:"En curso" }}</td>
+            <td class="fila-acciones">
+                <a href="{% url 'mascotas:medicamento_editar' m.pk %}">Editar</a>
+                <a href="{% url 'mascotas:medicamento_eliminar' m.pk %}" class="texto-peligro">Eliminar</a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="vacio">No hay medicamentos {% if not historial %}activos{% endif %}.</p>
+{% endif %}
+{% endblock %}

@@ -9,8 +9,8 @@ from .models import CategoriaGasto, Mascota
 
 class FormulariosTests(TestCase):
     def setUp(self):
-        self.ana = User.objects.create_user('ana', password='x')
-        self.beto = User.objects.create_user('beto', password='x')
+        self.ana = User.objects.create_user('ana')
+        self.beto = User.objects.create_user('beto')
         self.michi = Mascota.objects.create(usuario=self.ana, nombre='Michi', sexo='H')
         self.retirada = Mascota.objects.create(usuario=self.ana, nombre='Tom', sexo='M', activa=False)
         self.ajena = Mascota.objects.create(usuario=self.beto, nombre='Luna', sexo='H')

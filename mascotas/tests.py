@@ -11,7 +11,7 @@ from .models import CategoriaGasto, Gasto, Mascota
 
 class ReglasDeNegocioTests(TestCase):
     def setUp(self):
-        usuario = User.objects.create_user('ana', password='x')
+        usuario = User.objects.create_user('ana')
         self.mascota = Mascota.objects.create(usuario=usuario, nombre='Michi', sexo='H')
         self.comida = CategoriaGasto.objects.get(nombre='Comida')
 

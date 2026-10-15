@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block titulo %}Confirmar eliminación{% endblock %}
+{% block contenido %}
+<section class="tarjeta angosta">
+    <h1>¿Eliminar «{{ object }}»?</h1>
+    <p>Esta acción no se puede deshacer.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="acciones">
+            <button type="submit" class="boton peligro">Sí, eliminar</button>
+            <a href="javascript:history.back()" class="boton secundario">Cancelar</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

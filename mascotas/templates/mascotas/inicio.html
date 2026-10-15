@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block contenido %}
+<h1>Hola, {{ user.username }}</h1>
+
+<div class="indicadores">
+    <div class="indicador">
+        <span class="etiqueta">Gastado en {{ hoy|date:"F Y" }}</span>
+        <strong>$ {{ total_mes|floatformat:"2g" }}</strong>
+    </div>
+    <div class="indicador">
+        <span class="etiqueta">Mascotas activas</span>
+        <strong>{{ mascotas|length }}</strong>
+    </div>
+</div>
+
+<div class="acciones">
+    <a class="boton" href="{% url 'mascotas:gasto_crear' %}">+ Registrar gasto</a>
+    <a class="boton secundario" href="{% url 'mascotas:mascota_crear' %}">+ Nueva mascota</a>
+    <a class="boton secundario" href="{% url 'mascotas:medicamento_crear' %}">+ Medicamento</a>
+</div>
+
+<section class="tarjeta">
+    <h2>Últimos gastos</h2>
+    {% if ultimos_gastos %}
+    <table>
+        <thead><tr><th>Fecha</th><th>Mascota</th><th>Producto</th><th>Categoría</th><th class="num">Total</th></tr></thead>
+        <tbody>
+        {% for gasto in ultimos_gastos %}
+            <tr>
+                <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
+                <td>{{ gasto.mascota }}</td>
+                <td>{{ gasto.producto }}</td>
+                <td>{{ gasto.categoria }}</td>
+                <td class="num">$ {{ gasto.valor_total|floatformat:"2g" }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="vacio">Aún no has registrado gastos.</p>
+    {% endif %}
+</section>
+{% endblock %}

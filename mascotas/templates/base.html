@@ -1,0 +1,38 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}Gastos de Mascotas{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'mascotas/estilos.css' %}">
+</head>
+<body>
+    <header class="barra">
+        <a class="marca" href="{% url 'mascotas:inicio' %}">🐾 Gastos de Mascotas</a>
+        {% if user.is_authenticated %}
+        <nav>
+            <a href="{% url 'mascotas:mascota_lista' %}">Mascotas</a>
+            <a href="{% url 'mascotas:gasto_lista' %}">Gastos</a>
+            <a href="{% url 'mascotas:medicamento_lista' %}">Medicamentos</a>
+            <a href="{% url 'mascotas:reportes' %}">Reportes</a>
+            <form method="post" action="{% url 'logout' %}" class="en-linea">
+                {% csrf_token %}
+                <button type="submit" class="enlace">Salir ({{ user.username }})</button>
+            </form>
+        </nav>
+        {% endif %}
+    </header>
+
+    <main class="contenido">
+        {% if messages %}
+        <ul class="mensajes">
+            {% for mensaje in messages %}
+            <li class="mensaje {{ mensaje.tags }}">{{ mensaje }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% block contenido %}{% endblock %}
+    </main>
+</body>
+</html>

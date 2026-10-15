@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 
 from .reglas import calcular_valor_total
 
@@ -40,6 +41,9 @@ class Mascota(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def get_absolute_url(self):
+        return reverse('mascotas:mascota_detalle', args=[self.pk])
 
 
 class CategoriaGasto(models.Model):

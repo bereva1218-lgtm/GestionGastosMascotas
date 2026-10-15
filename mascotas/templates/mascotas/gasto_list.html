@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block titulo %}Gastos{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+    <h1>Gastos</h1>
+    <a class="boton" href="{% url 'mascotas:gasto_crear' %}">+ Registrar gasto</a>
+</div>
+
+<form method="get" class="filtros">
+    {{ filtro.non_field_errors }}
+    {% for campo in filtro %}
+    <label>{{ campo.label }} {{ campo }}</label>
+    {% endfor %}
+    <button type="submit" class="boton">Filtrar</button>
+    <a href="{% url 'mascotas:gasto_lista' %}" class="boton secundario">Limpiar</a>
+</form>
+
+<p class="total">Total filtrado: <strong>$ {{ total|floatformat:"2g" }}</strong> ({{ gastos|length }} registro{{ gastos|length|pluralize }})</p>
+
+{% if gastos %}
+<table>
+    <thead><tr><th>Fecha</th><th>Mascota</th><th>Producto</th><th>Categoría</th><th class="num">Cantidad</th><th class="num">V. unitario</th><th class="num">Total</th><th></th></tr></thead>
+    <tbody>
+    {% for gasto in gastos %}
+        <tr>
+            <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
+            <td>{{ gasto.mascota }}</td>
+            <td>{{ gasto.producto }}</td>
+            <td>{{ gasto.categoria }}</td>
+            <td class="num">{{ gasto.cantidad|floatformat:"-2" }}</td>
+            <td class="num">$ {{ gasto.valor_unitario|floatformat:"2g" }}</td>
+            <td class="num">$ {{ gasto.valor_total|floatformat:"2g" }}</td>
+            <td class="fila-acciones">
+                <a href="{% url 'mascotas:gasto_editar' gasto.pk %}">Editar</a>
+                <a href="{% url 'mascotas:gasto_eliminar' gasto.pk %}" class="texto-peligro">Eliminar</a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="vacio">No hay gastos con estos filtros.</p>
+{% endif %}
+{% endblock %}
