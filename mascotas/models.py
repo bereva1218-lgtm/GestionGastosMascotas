@@ -5,6 +5,8 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 
+from .reglas import calcular_valor_total
+
 POSITIVO = [MinValueValidator(Decimal('0.01'))]
 
 
@@ -71,7 +73,7 @@ class Gasto(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        self.valor_total = self.cantidad * self.valor_unitario
+        self.valor_total = calcular_valor_total(self.cantidad, self.valor_unitario)
         super().save(*args, **kwargs)
 
     def __str__(self):
