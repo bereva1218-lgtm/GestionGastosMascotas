@@ -40,9 +40,9 @@ corren en milisegundos.
 
 | Fase | Commit | Evidencia | Resultado |
 |---|---|---|---|
-| Prueba inicial (rojo) | `9c133c0` test: pruebas de total_mensual (rojo) | [`01_rojo.txt`](evidencias/01_rojo.txt) | 5 pruebas, `FAILED (errors=6)`; la función era un stub `NotImplementedError` |
-| Implementación (verde) | `d6166cb` feat: total_mensual (verde) | [`02_verde.txt`](evidencias/02_verde.txt) | `Ran 5 tests … OK` |
-| Refactorización | `1571a3b` refactor: reglas puras separadas del modelo | [`03_refactor.txt`](evidencias/03_refactor.txt) | Suite completa de la app: `Ran 9 tests … OK` |
+| Prueba inicial (rojo) | `98ae621` test: pruebas de total_mensual (rojo) | [`01_rojo.txt`](evidencias/01_rojo.txt) | 5 pruebas, `FAILED (errors=6)`; la función era un stub `NotImplementedError` |
+| Implementación (verde) | `cc1c59d` feat: total_mensual (verde) | [`02_verde.txt`](evidencias/02_verde.txt) | `Ran 5 tests … OK` |
+| Refactorización | `132716a` refactor: reglas puras separadas del modelo | [`03_refactor.txt`](evidencias/03_refactor.txt) | Suite completa de la app: `Ran 9 tests … OK` |
 
 Ver la secuencia con `git log --oneline`.
 
