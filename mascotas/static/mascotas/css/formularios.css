@@ -1,0 +1,82 @@
+/* =============================================================================
+   Formularios de alta/edición y página de confirmación de eliminación.
+   Complementa estilos.css; solo usa tokens (var(--…)), sin colores sueltos.
+   ============================================================================= */
+
+/* ---------- Columna de trabajo ---------- */
+/* Los formularios se leen mejor en una columna más angosta que los listados. */
+.pagina-formulario { max-width: 1080px; margin-inline: auto; }
+
+/* ---------- Registro que se está editando ---------- */
+.registro-actual {
+    display: inline-flex; max-width: 100%; margin-top: var(--e-4);
+    padding: var(--e-2) var(--e-4) var(--e-2) var(--e-2);
+    background: var(--c-superficie); border: 1px solid var(--c-borde);
+    border-radius: var(--r); box-shadow: var(--sombra-1);
+}
+.registro-actual .celda-principal__texto { flex: 1; }
+.registro-actual__extremo {
+    flex-shrink: 0; padding-left: var(--e-3); border-left: 1px solid var(--c-borde);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Secciones ---------- */
+.formulario__seccion-icono {
+    --cat: var(--c-primario); --cat-suave: var(--c-primario-suave);
+    margin-bottom: var(--e-3);
+}
+.formulario__seccion-texto p + p { margin-top: var(--e-2); }
+
+/* Total en vivo: ocupa todo el ancho de la rejilla, bajo cantidad y valor unitario. */
+.formulario__rejilla > .resumen-calculo { grid-column: 1 / -1; }
+.resumen-calculo__formula { margin-top: 2px; font-size: var(--t-xs); color: var(--c-texto-3); }
+
+/* Alerta con título y texto apilados. */
+.alerta__contenido { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+/* Resumen de errores: cada campo con error enlaza a su control. */
+.alerta__lista { display: flex; flex-direction: column; gap: 2px; margin: var(--e-1) 0 0; padding-left: var(--e-4); color: var(--c-texto-2); }
+.alerta__lista:empty { display: none; }
+.alerta__lista a { color: var(--c-texto); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.alerta__lista a:hover { color: var(--c-peligro); }
+
+/* ---------- Confirmación de eliminación ---------- */
+.confirmacion { max-width: 560px; margin: var(--e-4) auto 0; }
+.confirmacion__cuerpo { display: flex; flex-direction: column; gap: var(--e-5); padding: var(--e-6) var(--e-6) var(--e-5); }
+
+.confirmacion .pagina-encabezado {
+    flex-direction: column; align-items: center; gap: var(--e-4);
+    margin-bottom: 0; text-align: center;
+}
+.confirmacion .pagina-encabezado__texto p { max-width: 46ch; margin-inline: auto; }
+/* Nombres largos sin espacios no deben desbordar la tarjeta en móvil. */
+.confirmacion h1, .confirmacion .celda-principal__titulo { overflow-wrap: anywhere; }
+
+.confirmacion__icono {
+    display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
+    background: var(--c-peligro-suave); color: var(--c-peligro);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--c-peligro-suave) 55%, transparent);
+}
+
+.confirmacion__resumen {
+    border: 1px solid var(--c-borde); border-radius: var(--r);
+    background: var(--c-superficie-2); overflow: hidden;
+}
+.confirmacion__resumen-cabeza {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--e-3);
+    padding: var(--e-4); border-bottom: 1px solid var(--c-borde); background: var(--c-superficie);
+}
+.confirmacion__resumen .ficha { padding: var(--e-4); }
+.confirmacion__total { font-size: var(--t-md); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.confirmacion__acciones { justify-content: flex-end; gap: var(--e-2); }
+/* Botón bloqueado (aria-disabled): sin efecto de hover que sugiera que funciona. */
+.confirmacion__acciones .btn--peligro[aria-disabled="true"]:hover { background: var(--c-peligro); }
+
+@media (max-width: 720px) {
+    .confirmacion { margin-top: 0; }
+    .confirmacion__cuerpo { padding: var(--e-5) var(--e-4) var(--e-4); }
+    .confirmacion__acciones { flex-direction: column-reverse; align-items: stretch; padding: var(--e-4); }
+    .confirmacion__acciones .btn, .confirmacion__acciones .form-en-linea { width: 100%; }
+    .registro-actual { display: flex; }
+}

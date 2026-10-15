@@ -1,0 +1,39 @@
+/* Listado de medicamentos: ajustes propios de la página. Solo tokens (ver estilos.css). */
+
+/* Mascota y frecuencia: el icono no se separa del texto, pero el texto (libre, hasta
+   100 caracteres) sí puede partirse para no ensanchar la tabla ni desbordar en móvil. */
+.medicamentos-mascota,
+.medicamentos-frecuencia { flex-wrap: nowrap; }
+.medicamentos-frecuencia { color: var(--c-texto-2); }
+.medicamentos-frecuencia .icono { color: var(--c-texto-3); }
+
+/* Enlace a la mascota con aspecto de texto de tabla. */
+.medicamentos-mascota__enlace { color: var(--c-texto); font-weight: 500; }
+.medicamentos-mascota__enlace:hover { color: var(--c-primario); }
+
+/* Tratamientos finalizados: nombre y mascota un tono más suaves; el resto hereda el
+   color atenuado de la fila (.fila--inactiva td). */
+.tabla tr.fila--inactiva .celda-principal__titulo,
+.tabla tr.fila--inactiva .medicamentos-mascota__enlace { color: var(--c-texto-2); }
+.tabla tr.fila--inactiva .medicamentos-frecuencia { color: inherit; }
+.tabla tr.fila--inactiva a.celda-principal__titulo:hover,
+.tabla tr.fila--inactiva .medicamentos-mascota__enlace:hover { color: var(--c-primario); }
+
+/* Observaciones: una sola línea con puntos suspensivos. Se recorta por líneas (no con
+   white-space: nowrap) para que el texto no fije un ancho mínimo a la columna. */
+.tabla-medicamentos .celda-principal__sub {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; line-clamp: 1;
+    max-width: 40ch; overflow: hidden; overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+    /* En móvil, el medicamento encabeza la tarjeta apilada, sin etiqueta y alineado a la izquierda. */
+    .tabla--apilable td.tabla-medicamentos__principal { justify-content: flex-start; text-align: left; margin-bottom: var(--e-1); }
+    .tabla--apilable td.tabla-medicamentos__principal::before { content: none; }
+    .tabla-medicamentos .celda-principal__sub { max-width: none; -webkit-line-clamp: 3; line-clamp: 3; }
+}
+
+@media print {
+    /* Los botones ya se ocultan al imprimir; se quita también su columna vacía. */
+    .tabla-medicamentos .tabla__acciones { display: none; }
+}

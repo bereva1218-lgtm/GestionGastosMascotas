@@ -1,3 +1,86 @@
 {% extends 'base_documento.html' %}
+{% load static ui %}
+{# Se renderiza con DEBUG=False. Contexto de Django: request_path, exception; el usuario puede ser anónimo. #}
+
 {% block titulo %}Página no encontrada{% endblock %}
-{% block cuerpo %}<main class="error-pagina" id="contenido"><div><p class="error-pagina__codigo">404</p><h1>Página no encontrada</h1></div></main>{% endblock %}
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/publico.css' %}">{% endblock %}
+
+{% block cuerpo %}
+<div class="error-pagina">
+    <header>
+        <a class="error-pagina__marca" href="{% url 'mascotas:inicio' %}"><span class="logo">{% icono 'huella' %}</span> Gastos de Mascotas</a>
+    </header>
+
+    <main class="error-pagina__caja" id="contenido">
+        <p class="error-pagina__codigo"><span class="oculto-visual">Error </span>404</p>
+        <h1>Página no encontrada</h1>
+        {% if user.is_authenticated %}
+        <p class="error-pagina__texto">La página que buscas no existe o cambió de dirección. Revisa el enlace o sigue desde una de las secciones de la aplicación.</p>
+        {% else %}
+        <p class="error-pagina__texto">La página que buscas no existe o cambió de dirección. Revisa el enlace o inicia sesión para seguir desde tu panel.</p>
+        {% endif %}
+        {% if request_path %}<code class="error-pagina__ruta" title="Dirección solicitada"><span class="oculto-visual">Dirección solicitada: </span>{{ request_path }}</code>{% endif %}
+
+        <div class="error-pagina__acciones">
+            {% if user.is_authenticated %}
+            <a class="btn btn--primario btn--lg" href="{% url 'mascotas:inicio' %}">{% icono 'inicio' %} Volver al panel</a>
+            {% else %}
+            <a class="btn btn--primario btn--lg" href="{% url 'login' %}">{% icono 'usuario' %} Iniciar sesión</a>
+            {% endif %}
+            <button type="button" class="btn btn--secundario btn--lg" data-volver hidden>{% icono 'volver' %} Volver atrás</button>
+        </div>
+
+        {% if user.is_authenticated %}
+        <section class="tarjeta error-pagina__atajos" aria-labelledby="titulo-atajos">
+            <header class="tarjeta__encabezado">
+                <h2 class="tarjeta__titulo" id="titulo-atajos">{% icono 'buscar' %} Quizá buscabas</h2>
+            </header>
+            <ul class="lista">
+                <li>
+                    <a class="lista__item lista__item--enlace" href="{% url 'mascotas:mascota_lista' %}">
+                        <span class="icono-circulo">{% icono 'huella' 'icono--sm' %}</span>
+                        <span class="lista__texto"><span class="lista__titulo">Mascotas</span><span class="lista__sub">Fichas y estado de cada mascota</span></span>
+                        <span class="lista__extremo">{% icono 'derecha' 'icono--sm' %}</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="lista__item lista__item--enlace" href="{% url 'mascotas:gasto_lista' %}">
+                        <span class="icono-circulo">{% icono 'recibo' 'icono--sm' %}</span>
+                        <span class="lista__texto"><span class="lista__titulo">Gastos</span><span class="lista__sub">Compras de comida, medicamentos y juguetes</span></span>
+                        <span class="lista__extremo">{% icono 'derecha' 'icono--sm' %}</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="lista__item lista__item--enlace" href="{% url 'mascotas:medicamento_lista' %}">
+                        <span class="icono-circulo">{% icono 'pastilla' 'icono--sm' %}</span>
+                        <span class="lista__texto"><span class="lista__titulo">Medicamentos</span><span class="lista__sub">Tratamientos en curso e historial</span></span>
+                        <span class="lista__extremo">{% icono 'derecha' 'icono--sm' %}</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="lista__item lista__item--enlace" href="{% url 'mascotas:reportes' %}">
+                        <span class="icono-circulo">{% icono 'grafico' 'icono--sm' %}</span>
+                        <span class="lista__texto"><span class="lista__titulo">Reportes</span><span class="lista__sub">Totales por mascota, categoría y mes</span></span>
+                        <span class="lista__extremo">{% icono 'derecha' 'icono--sm' %}</span>
+                    </a>
+                </li>
+            </ul>
+        </section>
+        {% else %}
+        <p class="error-pagina__alterno">¿Aún no tienes cuenta? <a href="{% url 'mascotas:registro' %}">Crea una</a></p>
+        {% endif %}
+    </main>
+
+    <footer class="error-pagina__pie">Gastos de Mascotas · Gestión y control</footer>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    {# «Volver atrás» solo aparece si hay una página anterior en el historial. #}
+    document.querySelectorAll('[data-volver]').forEach(function (boton) {
+        if (window.history.length > 1) boton.hidden = false;
+        boton.addEventListener('click', function () { window.history.back(); });
+    });
+</script>
+{% endblock %}

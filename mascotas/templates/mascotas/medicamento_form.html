@@ -1,14 +1,131 @@
 {% extends 'base.html' %}
-{% load ui %}
-{% block titulo %}{{ titulo }}{% endblock %}
+{% load ui static %}
+
+{# Al editar se usa form.initial: tras un envío con errores, object ya trae los valores sin guardar. #}
+{% block titulo %}{{ titulo }}{% if object %} · {{ form.initial.nombre }}{% endif %}{% endblock %}
+
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/formularios.css' %}">{% endblock %}
+
+{% block migas %}
+<li><a href="{% url 'mascotas:medicamento_lista' %}">Medicamentos</a></li>
+<li><span aria-current="page">{% if object %}Editar{% else %}Nuevo{% endif %}</span></li>
+{% endblock %}
+
+{% block accion_barra %}{% endblock %}
+
 {% block contenido %}
-<header class="pagina-encabezado"><div class="pagina-encabezado__texto"><h1>{{ titulo }}</h1></div></header>
-<form method="post" class="formulario" novalidate>
-    {% csrf_token %}
-    <section class="formulario__seccion">
-        <div class="formulario__seccion-texto"><h2>Datos</h2></div>
-        <div class="formulario__rejilla">{% for field in form %}{% campo field %}{% endfor %}</div>
-    </section>
-    <div class="formulario__acciones"><button type="submit" class="btn btn--primario">Guardar</button></div>
-</form>
+<div class="pagina-formulario">
+    <header class="pagina-encabezado">
+        <div class="pagina-encabezado__texto">
+            <span class="pagina-encabezado__antetitulo">Medicamentos</span>
+            <h1>{{ titulo }}</h1>
+            {% if object %}
+            <p>Ajusta la dosis, la frecuencia o las fechas de este tratamiento.</p>
+            {% with ini=form.initial %}
+            <div class="registro-actual celda-principal">
+                <span class="icono-circulo cat-medicamentos">{% icono 'pastilla' 'icono--sm' %}</span>
+                <span class="celda-principal__texto">
+                    <span class="celda-principal__titulo truncar">{{ ini.nombre }}</span>
+                    <span class="celda-principal__sub truncar">{% for mascota in form.fields.mascota.queryset %}{% if mascota.pk == ini.mascota %}{{ mascota }} · {% endif %}{% endfor %}{{ ini.dosis }} · {{ ini.frecuencia }}</span>
+                </span>
+                {# Mismos estados que la lista de medicamentos. #}
+                {% now "Y-m-d" as hoy_iso %}
+                {% with dias=object.dias_restantes %}
+                {% if object.fecha_inicio|date:"Y-m-d" > hoy_iso %}
+                <span class="insignia insignia--primario"><span class="insignia__punto"></span>Programado</span>
+                {% elif dias is None %}
+                <span class="insignia insignia--info"><span class="insignia__punto"></span>Continuo</span>
+                {% elif dias < 0 %}
+                <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Finalizado</span>
+                {% elif dias == 0 %}
+                <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Termina hoy</span>
+                {% elif dias <= 3 %}
+                <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Queda{{ dias|pluralize:"n" }} {{ dias }} día{{ dias|pluralize }}</span>
+                {% else %}
+                <span class="insignia insignia--exito"><span class="insignia__punto"></span>Quedan {{ dias }} días</span>
+                {% endif %}
+                {% endwith %}
+            </div>
+            {% endwith %}
+            {% else %}
+            <p>Registra un tratamiento con su dosis, frecuencia y duración para saber siempre qué toca y hasta cuándo.</p>
+            {% endif %}
+        </div>
+        {% if object %}
+        <div class="pagina-encabezado__acciones">
+            <a class="btn btn--peligro-suave" href="{% url 'mascotas:medicamento_eliminar' object.pk %}">{% icono 'eliminar' %} Eliminar</a>
+        </div>
+        {% endif %}
+    </header>
+
+    <form method="post" class="formulario" novalidate>
+        {% csrf_token %}
+        {% for oculto in form.hidden_fields %}{{ oculto }}{% endfor %}
+
+        {% if form.errors %}
+        <div class="alerta alerta--peligro" role="alert">
+            {% icono 'alerta' %}
+            <div class="alerta__contenido">
+                <strong class="alerta__titulo">No se pudo guardar el medicamento</strong>
+                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                <ul class="alerta__lista">{% for campo in form.visible_fields %}{% if campo.errors %}<li><a href="#{{ campo.id_for_label }}">{{ campo.label }}</a>: {{ campo.errors|first }}</li>{% endif %}{% endfor %}</ul>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not form.fields.mascota.queryset.exists %}
+        <div class="alerta alerta--aviso">
+            {% icono 'alerta' %}
+            <div class="alerta__contenido">
+                <strong class="alerta__titulo">Primero necesitas una mascota activa</strong>
+                <p>Cada tratamiento pertenece a una mascota activa. <a href="{% url 'mascotas:mascota_crear' %}">Registra una mascota</a> o <a href="{% url 'mascotas:mascota_lista' %}?estado=retiradas">reactiva una retirada</a> y vuelve para anotar el medicamento.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <section class="formulario__seccion" aria-labelledby="seccion-tratamiento">
+            <div class="formulario__seccion-texto">
+                <span class="icono-circulo formulario__seccion-icono">{% icono 'pastilla' %}</span>
+                <h2 id="seccion-tratamiento">Tratamiento</h2>
+                <p>Qué medicamento recibe tu mascota y cómo se le administra.</p>
+            </div>
+            <div class="formulario__rejilla">
+                {% campo form.mascota %}
+                {% campo form.nombre %}
+                {% campo form.dosis %}
+                {% campo form.frecuencia %}
+            </div>
+        </section>
+
+        <section class="formulario__seccion" aria-labelledby="seccion-duracion">
+            <div class="formulario__seccion-texto">
+                <span class="icono-circulo formulario__seccion-icono">{% icono 'calendario' %}</span>
+                <h2 id="seccion-duracion">Duración</h2>
+                <p>El tratamiento aparece como activo desde la fecha de inicio hasta la de finalización.</p>
+                <p>Si es continuo, deja vacía la fecha de finalización.</p>
+            </div>
+            <div class="formulario__rejilla">
+                {% campo form.fecha_inicio %}
+                {% campo form.fecha_fin %}
+            </div>
+        </section>
+
+        <section class="formulario__seccion" aria-labelledby="seccion-notas">
+            <div class="formulario__seccion-texto">
+                <span class="icono-circulo formulario__seccion-icono">{% icono 'nota' %}</span>
+                <h2 id="seccion-notas">Notas veterinarias</h2>
+                <p>Indicaciones del veterinario, reacciones observadas o recordatorios para la próxima dosis.</p>
+            </div>
+            <div class="formulario__rejilla">
+                {% campo form.observaciones ancho='completo' %}
+            </div>
+        </section>
+
+        <div class="formulario__acciones">
+            <p class="formulario__acciones-nota">Los campos con <span class="campo__requerido">*</span> son obligatorios.</p>
+            <a class="btn btn--secundario" href="{% url 'mascotas:medicamento_lista' %}">Cancelar</a>
+            <button type="submit" class="btn btn--primario">{% icono 'check' %} {% if object %}Guardar cambios{% else %}Guardar medicamento{% endif %}</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

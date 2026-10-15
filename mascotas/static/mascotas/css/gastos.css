@@ -1,0 +1,70 @@
+/* =============================================================================
+   Listado de gastos (mascotas/gasto_list.html)
+   Filtros activos que se pueden quitar, barra de filtros sin desbordes en
+   anchos intermedios, enlace de mascota en la tabla y paginación compacta en
+   móvil. Solo tokens de estilos.css.
+   ============================================================================= */
+
+/* Indicadores: en móvil (2 columnas) el tercero ocupa toda la fila. */
+@media (max-width: 720px) {
+    .gastos-kpis > .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+
+/* Barra de filtros
+   La rejilla base (6 columnas con mínimos fijos) no cabe entre 721 y ~1400 px
+   con la barra lateral: aquí pasa a 4 columnas
+   (búsqueda ×2 · mascota · categoría / desde · hasta · acciones ×2). */
+@media (pointer: fine) {
+    /* Igualar la altura de los botones con la de los campos (42 px). */
+    .gastos-filtros .filtros__acciones .btn { min-height: 42px; }
+}
+
+@media (min-width: 721px) and (max-width: 1400px) {
+    .gastos-filtros { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .gastos-filtros__busqueda { grid-column: span 2; }
+    .gastos-filtros .filtros__acciones { grid-column: span 2; justify-content: flex-end; }
+}
+
+@media (max-width: 720px) {
+    /* Dos columnas: búsqueda y acciones a lo ancho; mascota/categoría y fechas en pareja. */
+    .gastos-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gastos-filtros__busqueda, .gastos-filtros .filtros__acciones { grid-column: 1 / -1; }
+    .gastos-filtros .filtros__acciones .btn { flex: 1; }
+}
+
+/* Filtros activos: chips sobre .insignia.insignia--borde dentro de .resumen-franja */
+.filtros-activos { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-2); min-width: 0; max-width: 100%; margin: 0; padding: 0; list-style: none; }
+.filtros-activos li { min-width: 0; max-width: 100%; }
+.filtro-activo {
+    gap: var(--e-1); max-width: 100%; padding-right: 6px;
+    background: var(--c-superficie); color: var(--c-texto); font-weight: 500; text-decoration: none;
+    transition: border-color var(--transicion), color var(--transicion);
+}
+.filtro-activo:hover { border-color: var(--c-texto-3); color: var(--c-texto); text-decoration: none; }
+.filtro-activo__clave { flex-shrink: 0; color: var(--c-texto-3); }
+.filtro-activo__valor { min-width: 0; max-width: 24ch; }
+.filtro-activo .icono { width: 12px; height: 12px; color: var(--c-texto-3); transition: color var(--transicion); }
+.filtro-activo:hover .icono { color: var(--c-peligro); }
+@media (pointer: coarse) {
+    .filtro-activo { min-height: 32px; }
+}
+
+/* Tabla */
+.gastos-mascota { flex-wrap: nowrap; min-width: 0; }
+.gastos-mascota__enlace { min-width: 0; max-width: 18ch; color: var(--c-texto); font-weight: 500; }
+.gastos-mascota__enlace:hover { color: var(--c-primario); }
+
+@media (min-width: 721px) {
+    /* Evita que el producto quede en una columna mínima, sin forzar scroll en portátiles. */
+    .gastos-producto { min-width: 11rem; }
+}
+
+/* Paginación */
+.paginacion__paginas { flex-wrap: wrap; }
+.paginacion__paginas .paginacion__elipsis { min-width: 20px; padding: 0; border-color: transparent; background: transparent; color: var(--c-texto-3); }
+
+@media (max-width: 720px) {
+    /* En móvil: anterior · página actual · siguiente. */
+    .paginacion__paginas .paginacion__numero:not([aria-current]),
+    .paginacion__paginas .paginacion__elipsis { display: none; }
+}

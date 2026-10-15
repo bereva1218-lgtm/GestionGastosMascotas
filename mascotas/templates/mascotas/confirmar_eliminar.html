@@ -1,15 +1,266 @@
 {% extends 'base.html' %}
-{% block titulo %}Confirmar eliminación{% endblock %}
+{% load ui static %}
+
+{% block titulo %}{% if tipo == 'mascota' %}Eliminar a {{ object.nombre }}{% elif tipo == 'gasto' %}Eliminar gasto · {{ object.producto }}{% elif tipo == 'medicamento' %}Eliminar medicamento · {{ object.nombre }}{% else %}Confirmar eliminación{% endif %}{% endblock %}
+
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/formularios.css' %}">{% endblock %}
+
+{% block migas %}
+{% if tipo == 'mascota' %}
+<li><a href="{% url 'mascotas:mascota_lista' %}">Mascotas</a></li>
+<li><a href="{{ object.get_absolute_url }}">{{ object.nombre }}</a></li>
+{% elif tipo == 'gasto' %}
+<li><a href="{% url 'mascotas:gasto_lista' %}">Gastos</a></li>
+{% elif tipo == 'medicamento' %}
+<li><a href="{% url 'mascotas:medicamento_lista' %}">Medicamentos</a></li>
+{% endif %}
+<li><span aria-current="page">Eliminar</span></li>
+{% endblock %}
+
+{% block accion_barra %}{% endblock %}
+
 {% block contenido %}
-<section class="tarjeta angosta">
-    <h1>¿Eliminar «{{ object }}»?</h1>
-    <p>Esta acción no se puede deshacer.</p>
-    <form method="post">
-        {% csrf_token %}
-        <div class="acciones">
-            <button type="submit" class="boton peligro">Sí, eliminar</button>
-            <a href="javascript:history.back()" class="boton secundario">Cancelar</a>
+{% if tipo == 'mascota' %}
+{% with num_gastos=object.gastos.count num_medicamentos=object.medicamentos.count %}
+<div class="confirmacion">
+    <article class="tarjeta">
+        <div class="confirmacion__cuerpo">
+            <header class="pagina-encabezado">
+                <span class="confirmacion__icono">{% icono 'alerta' 'icono--lg' %}</span>
+                <div class="pagina-encabezado__texto">
+                    <h1>¿Eliminar a {{ object.nombre }}?</h1>
+                    {% if num_gastos or num_medicamentos %}
+                    <p>Tiene gastos o medicamentos registrados, así que su ficha no se puede borrar. Te contamos qué puedes hacer.</p>
+                    {% else %}
+                    <p>Se borrará su ficha por completo. Revisa los datos antes de confirmar.</p>
+                    {% endif %}
+                </div>
+            </header>
+
+            <section class="confirmacion__resumen" aria-labelledby="titulo-resumen">
+                <h2 class="oculto-visual" id="titulo-resumen">{% if num_gastos or num_medicamentos %}Datos de la mascota{% else %}Mascota que se eliminará{% endif %}</h2>
+                <div class="confirmacion__resumen-cabeza">
+                    <div class="celda-principal">
+                        <span class="avatar avatar--sm {{ object|tono }}{% if not object.activa %} avatar--inactivo{% endif %}">{{ object.nombre|inicial }}</span>
+                        <span class="celda-principal__texto">
+                            <span class="celda-principal__titulo">{{ object.nombre }}</span>
+                            <span class="celda-principal__sub">{{ object.especie }}{% if object.raza %} · {{ object.raza }}{% endif %}</span>
+                        </span>
+                    </div>
+                    {% if object.activa %}
+                    <span class="insignia insignia--exito"><span class="insignia__punto"></span>Activa</span>
+                    {% else %}
+                    <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Retirada</span>
+                    {% endif %}
+                </div>
+                <dl class="ficha">
+                    <dt>{% icono 'usuario' %} Sexo</dt>
+                    <dd>{{ object.get_sexo_display }}</dd>
+                    {% if object.fecha_nacimiento %}
+                    <dt>{% icono 'calendario' %} Edad</dt>
+                    <dd>{{ object.fecha_nacimiento|edad }}</dd>
+                    {% endif %}
+                    <dt>{% icono 'recibo' %} Gastos</dt>
+                    <dd class="num">{{ num_gastos }} registrado{{ num_gastos|pluralize }}</dd>
+                    <dt>{% icono 'pastilla' %} Medicamentos</dt>
+                    <dd class="num">{{ num_medicamentos }} registrado{{ num_medicamentos|pluralize }}</dd>
+                </dl>
+            </section>
+
+            {% if num_gastos or num_medicamentos %}
+            <div class="alerta alerta--aviso" id="motivo-bloqueo">
+                {% icono 'alerta' %}
+                <div class="alerta__contenido">
+                    <strong class="alerta__titulo">No se puede eliminar porque tiene historial</strong>
+                    <p>{{ object.nombre }} tiene {% if num_gastos %}{{ num_gastos }} gasto{{ num_gastos|pluralize }}{% endif %}{% if num_gastos and num_medicamentos %} y {% endif %}{% if num_medicamentos %}{{ num_medicamentos }} medicamento{{ num_medicamentos|pluralize }}{% endif %} registrado{% if num_gastos|add:num_medicamentos > 1 %}s{% endif %}. Para no perder ese historial, las mascotas con registros no se eliminan.</p>
+                    {% if object.activa %}
+                    <p>Retira la mascota en su lugar: dejará de aparecer entre las activas, su historial se conserva y puedes reactivarla cuando quieras.</p>
+                    {% else %}
+                    <p>Ya está retirada, así que no aparece entre tus mascotas activas y su historial se conserva.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alerta alerta--aviso">
+                {% icono 'alerta' %}
+                <div class="alerta__contenido">
+                    <strong class="alerta__titulo">Esta acción no se puede deshacer</strong>
+                    {% if object.activa %}
+                    <p>No tiene gastos ni medicamentos registrados. Si solo quieres que deje de aparecer en tus listas, <a href="{{ object.get_absolute_url }}">retírala desde su ficha</a>.</p>
+                    {% else %}
+                    <p>No tiene gastos ni medicamentos registrados y ya está retirada. Elimínala solo si la registraste por error.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </div>
-    </form>
-</section>
+
+        <div class="tarjeta__pie confirmacion__acciones">
+            <a class="btn btn--secundario" href="{{ object.get_absolute_url }}">{% if num_gastos or num_medicamentos %}Volver a la ficha{% else %}Cancelar{% endif %}</a>
+            {% if num_gastos or num_medicamentos %}
+                {# Borrado bloqueado por el historial. aria-disabled (no disabled) lo deja enfocable para que se anuncie el motivo. #}
+                <button type="button" class="btn btn--peligro" aria-disabled="true" aria-describedby="motivo-bloqueo">{% icono 'eliminar' %} Sí, eliminar</button>
+                {% if object.activa %}
+                <form method="post" action="{% url 'mascotas:mascota_retirar' object.pk %}" class="form-en-linea">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn--primario">{% icono 'archivar' %} Retirar mascota</button>
+                </form>
+                {% endif %}
+            {% else %}
+            <form method="post" class="form-en-linea">
+                {% csrf_token %}
+                <button type="submit" class="btn btn--peligro">{% icono 'eliminar' %} Sí, eliminar</button>
+            </form>
+            {% endif %}
+        </div>
+    </article>
+</div>
+{% endwith %}
+
+{% elif tipo == 'gasto' %}
+<div class="confirmacion">
+    <article class="tarjeta">
+        <div class="confirmacion__cuerpo">
+            <header class="pagina-encabezado">
+                <span class="confirmacion__icono">{% icono 'alerta' 'icono--lg' %}</span>
+                <div class="pagina-encabezado__texto">
+                    <h1>¿Eliminar el gasto «{{ object.producto }}»?</h1>
+                    <p>Dejará de sumar en los totales de {{ object.mascota }} y en tus reportes.</p>
+                </div>
+            </header>
+
+            <section class="confirmacion__resumen" aria-labelledby="titulo-resumen">
+                <h2 class="oculto-visual" id="titulo-resumen">Gasto que se eliminará</h2>
+                <div class="confirmacion__resumen-cabeza">
+                    <div class="celda-principal">
+                        <span class="icono-circulo {{ object.categoria|clase_categoria }}">{% icono 'paquete' 'icono--sm' %}</span>
+                        <span class="celda-principal__texto">
+                            <span class="celda-principal__titulo">{{ object.producto }}</span>
+                            {% if object.proveedor %}<span class="celda-principal__sub">{{ object.proveedor }}</span>{% endif %}
+                        </span>
+                    </div>
+                    <span class="confirmacion__total">{{ object.valor_total|moneda }}</span>
+                </div>
+                <dl class="ficha">
+                    <dt>{% icono 'huella' %} Mascota</dt>
+                    <dd>{{ object.mascota }}</dd>
+                    <dt>{% icono 'etiqueta' %} Categoría</dt>
+                    <dd><span class="insignia {{ object.categoria|clase_categoria }}">{{ object.categoria }}</span></dd>
+                    <dt>{% icono 'calendario' %} Fecha</dt>
+                    <dd>{{ object.fecha|date:"j \d\e F \d\e Y"|lower }}</dd>
+                    <dt>{% icono 'hash' %} Cantidad × valor</dt>
+                    <dd class="num">{{ object.cantidad|floatformat:"-2" }} × {{ object.valor_unitario|moneda }}</dd>
+                </dl>
+            </section>
+
+            <div class="alerta alerta--aviso">
+                {% icono 'alerta' %}
+                <div class="alerta__contenido">
+                    <strong class="alerta__titulo">Esta acción no se puede deshacer</strong>
+                    <p>Si solo necesitas corregir un dato, <a href="{% url 'mascotas:gasto_editar' object.pk %}">edita el gasto</a> en lugar de eliminarlo.</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" class="tarjeta__pie confirmacion__acciones">
+            {% csrf_token %}
+            <a class="btn btn--secundario" href="{% url 'mascotas:gasto_lista' %}">Cancelar</a>
+            <button type="submit" class="btn btn--peligro">{% icono 'eliminar' %} Sí, eliminar</button>
+        </form>
+    </article>
+</div>
+
+{% elif tipo == 'medicamento' %}
+<div class="confirmacion">
+    <article class="tarjeta">
+        <div class="confirmacion__cuerpo">
+            <header class="pagina-encabezado">
+                <span class="confirmacion__icono">{% icono 'alerta' 'icono--lg' %}</span>
+                <div class="pagina-encabezado__texto">
+                    <h1>¿Eliminar el medicamento «{{ object.nombre }}»?</h1>
+                    <p>El tratamiento desaparecerá del historial de {{ object.mascota }}.</p>
+                </div>
+            </header>
+
+            <section class="confirmacion__resumen" aria-labelledby="titulo-resumen">
+                <h2 class="oculto-visual" id="titulo-resumen">Medicamento que se eliminará</h2>
+                <div class="confirmacion__resumen-cabeza">
+                    <div class="celda-principal">
+                        <span class="icono-circulo cat-medicamentos">{% icono 'pastilla' 'icono--sm' %}</span>
+                        <span class="celda-principal__texto">
+                            <span class="celda-principal__titulo">{{ object.nombre }}</span>
+                            <span class="celda-principal__sub">{{ object.mascota }}</span>
+                        </span>
+                    </div>
+                    {# Mismos estados que la lista de medicamentos. #}
+                    {% now "Y-m-d" as hoy_iso %}
+                    {% with dias=object.dias_restantes %}
+                    {% if object.fecha_inicio|date:"Y-m-d" > hoy_iso %}
+                    <span class="insignia insignia--primario"><span class="insignia__punto"></span>Programado</span>
+                    {% elif dias is None %}
+                    <span class="insignia insignia--info"><span class="insignia__punto"></span>Continuo</span>
+                    {% elif dias < 0 %}
+                    <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Finalizado</span>
+                    {% elif dias == 0 %}
+                    <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Termina hoy</span>
+                    {% elif dias <= 3 %}
+                    <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Queda{{ dias|pluralize:"n" }} {{ dias }} día{{ dias|pluralize }}</span>
+                    {% else %}
+                    <span class="insignia insignia--exito"><span class="insignia__punto"></span>Quedan {{ dias }} días</span>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <dl class="ficha">
+                    <dt>{% icono 'gota' %} Dosis</dt>
+                    <dd>{{ object.dosis }}</dd>
+                    <dt>{% icono 'reloj' %} Frecuencia</dt>
+                    <dd>{{ object.frecuencia }}</dd>
+                    <dt>{% icono 'calendario' %} Periodo</dt>
+                    <dd>{% if object.fecha_fin %}Del {{ object.fecha_inicio|date:"j \d\e F \d\e Y"|lower }} al {{ object.fecha_fin|date:"j \d\e F \d\e Y"|lower }}{% else %}Desde el {{ object.fecha_inicio|date:"j \d\e F \d\e Y"|lower }}, sin fecha de fin{% endif %}</dd>
+                </dl>
+            </section>
+
+            <div class="alerta alerta--aviso">
+                {% icono 'alerta' %}
+                <div class="alerta__contenido">
+                    <strong class="alerta__titulo">Esta acción no se puede deshacer</strong>
+                    {% if not object.activo %}
+                    <p>Los tratamientos terminados se conservan en el historial de {{ object.mascota }}; elimínalo solo si lo registraste por error.</p>
+                    {% elif object.fecha_fin %}
+                    <p>Si lo suspendiste antes de tiempo, no hace falta eliminarlo: <a href="{% url 'mascotas:medicamento_editar' object.pk %}">cambia su fecha de finalización</a> y quedará en el historial.</p>
+                    {% else %}
+                    <p>Si el tratamiento ya terminó, no hace falta eliminarlo: <a href="{% url 'mascotas:medicamento_editar' object.pk %}">indica su fecha de finalización</a> y quedará en el historial.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <form method="post" class="tarjeta__pie confirmacion__acciones">
+            {% csrf_token %}
+            <a class="btn btn--secundario" href="{% url 'mascotas:medicamento_lista' %}">Cancelar</a>
+            <button type="submit" class="btn btn--peligro">{% icono 'eliminar' %} Sí, eliminar</button>
+        </form>
+    </article>
+</div>
+
+{% else %}
+<div class="confirmacion">
+    <article class="tarjeta">
+        <div class="confirmacion__cuerpo">
+            <header class="pagina-encabezado">
+                <span class="confirmacion__icono">{% icono 'alerta' 'icono--lg' %}</span>
+                <div class="pagina-encabezado__texto">
+                    <h1>¿Eliminar «{{ object }}»?</h1>
+                    <p>Esta acción no se puede deshacer.</p>
+                </div>
+            </header>
+        </div>
+        <form method="post" class="tarjeta__pie confirmacion__acciones">
+            {% csrf_token %}
+            <a class="btn btn--secundario" href="{% url 'mascotas:inicio' %}">Cancelar</a>
+            <button type="submit" class="btn btn--peligro">{% icono 'eliminar' %} Sí, eliminar</button>
+        </form>
+    </article>
+</div>
+{% endif %}
 {% endblock %}

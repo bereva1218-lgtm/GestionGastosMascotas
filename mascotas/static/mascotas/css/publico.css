@@ -1,0 +1,112 @@
+/* =============================================================================
+   Páginas públicas: acceso, registro y páginas de error (403, 404, 500).
+   Complementa las secciones 18 y 19 de estilos.css. Solo usa tokens, así que
+   funciona igual en tema claro y oscuro.
+   ============================================================================= */
+
+/* ---------- Acceso y registro ---------- */
+.auth__encabezado { display: flex; flex-direction: column; gap: var(--e-2); margin-bottom: var(--e-6); }
+.auth__encabezado p { color: var(--c-texto-2); }
+.auth__caja > .alerta { margin-bottom: var(--e-5); }
+/* Título de la alerta en su propia línea; como <strong> conserva el color de la alerta (igual que en los formularios). */
+.auth__caja .alerta__titulo { display: block; margin-bottom: 2px; }
+.auth__enviar { margin-top: var(--e-2); }
+.auth__nota {
+    display: flex; align-items: center; justify-content: center; gap: var(--e-2);
+    font-size: var(--t-xs); color: var(--c-texto-3); text-align: center;
+}
+.auth__nota .icono { color: var(--c-primario); }
+
+/* Pasos numerados del panel de registro (reutilizan .auth__puntos). */
+.auth__paso { font-size: var(--t-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Requisitos de contraseña: Django entrega el help_text como <ul>. */
+.auth__caja .campo ul {
+    display: grid; gap: 4px; margin: 2px 0 0; padding: var(--e-3);
+    list-style: none; font-size: var(--t-xs); line-height: 1.45; color: var(--c-texto-3);
+    background: var(--c-superficie-2); border: 1px solid var(--c-borde); border-radius: var(--r-sm);
+}
+.auth__caja .campo li { position: relative; padding-left: var(--e-4); }
+.auth__caja .campo li::before {
+    content: ''; position: absolute; left: 2px; top: 0.55em;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--c-borde-fuerte);
+}
+/* Un <ul> dentro de <p class="campo__ayuda"> deja párrafos vacíos al analizar el HTML. */
+.auth__caja .campo > p:empty { display: none; }
+
+/* ---------- Páginas de error ---------- */
+.error-pagina {
+    position: relative; isolation: isolate; overflow: hidden;
+    grid-template-rows: auto 1fr auto; gap: var(--e-6);
+    padding: var(--e-5) var(--e-4);
+    background: radial-gradient(760px 400px at 50% -10%, var(--c-primario-suave), transparent 70%), var(--c-fondo);
+}
+.error-pagina::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(var(--c-borde-fuerte) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.55;
+    -webkit-mask-image: radial-gradient(ellipse 60% 48% at 50% 38%, var(--c-texto), transparent);
+    mask-image: radial-gradient(ellipse 60% 48% at 50% 38%, var(--c-texto), transparent);
+}
+
+.error-pagina__marca {
+    display: inline-flex; align-items: center; gap: var(--e-3);
+    color: var(--c-texto); font-weight: 650; letter-spacing: -0.01em; text-decoration: none;
+}
+.error-pagina__marca:hover { color: var(--c-texto); text-decoration: none; }
+
+.error-pagina__caja { display: flex; flex-direction: column; align-items: center; gap: var(--e-4); width: 100%; max-width: 560px; }
+.error-pagina__codigo {
+    margin-bottom: var(--e-1);
+    /* El degradado base termina en un verde menta que en tema claro no llega a 3:1 sobre el fondo.
+       Solo background-image: el atajo background reiniciaría background-clip: text. */
+    background-image: linear-gradient(135deg, var(--c-texto) 15%, var(--c-primario));
+}
+.error-pagina__caja h1 { font-size: var(--t-2xl); letter-spacing: -0.03em; }
+.error-pagina__texto { max-width: 46ch; font-size: var(--t-md); color: var(--c-texto-2); }
+.error-pagina__ruta {
+    max-width: 100%; padding: 4px 12px; border: 1px solid var(--c-borde); border-radius: var(--r-pill);
+    background: var(--c-superficie); color: var(--c-texto-2); box-shadow: var(--sombra-1);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--t-xs);
+    overflow-wrap: anywhere;
+}
+
+.error-pagina__acciones { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--e-3); margin-top: var(--e-2); }
+/* .btn fija display y anularía el atributo hidden del botón «Volver atrás». */
+.error-pagina__acciones [hidden] { display: none; }
+
+.error-pagina__sesion {
+    display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--e-2);
+    padding: var(--e-2) var(--e-2) var(--e-2) var(--e-3);
+    border: 1px solid var(--c-borde); border-radius: var(--r-pill);
+    background: var(--c-superficie); box-shadow: var(--sombra-1);
+    font-size: var(--t-sm); color: var(--c-texto-2);
+}
+.error-pagina__sesion strong { color: var(--c-texto); }
+
+.error-pagina__atajos { width: 100%; margin-top: var(--e-4); text-align: left; }
+.error-pagina__atajos .lista__extremo { color: var(--c-texto-3); }
+/* El fondo al pasar el cursor sigue las esquinas redondeadas de la tarjeta; el foco queda por dentro. */
+.error-pagina__atajos li:last-child > .lista__item { border-radius: 0 0 calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px); }
+.error-pagina__atajos .lista__item--enlace:focus-visible { outline-offset: -2px; }
+
+.error-pagina__alterno { font-size: var(--t-sm); color: var(--c-texto-2); }
+/* --c-texto-3 sobre --c-fondo queda por debajo de 4.5:1 en tema claro. */
+.error-pagina__pie { font-size: var(--t-xs); color: var(--c-texto-2); }
+
+@media (max-width: 720px) {
+    /* Panel de marca compacto para que el formulario quede a la vista en el teléfono. */
+    .auth__panel { gap: var(--e-4); padding: var(--e-4); }
+    .auth__titular { font-size: var(--t-lg); }
+    .auth__bajada { margin-top: var(--e-2); font-size: var(--t-sm); }
+    .auth__formulario { padding: var(--e-5) var(--e-4) var(--e-6); }
+
+    .error-pagina { gap: var(--e-5); }
+    /* En dos líneas la píldora se deforma: pasa a esquinas normales. */
+    .error-pagina__sesion { border-radius: var(--r-lg); padding: var(--e-2) var(--e-3); }
+    .error-pagina__caja h1 { font-size: var(--t-xl); }
+    .error-pagina__texto { font-size: var(--t-base); }
+    .error-pagina__acciones { align-self: stretch; flex-direction: column; }
+    .error-pagina__acciones .btn { width: 100%; }
+}

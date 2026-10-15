@@ -1,13 +1,51 @@
-{% extends 'base.html' %}
-{% block titulo %}Crear cuenta{% endblock %}
+{% extends 'base_publico.html' %}
+{% load static ui %}
+
+{% block titulo %}Crea tu cuenta{% endblock %}
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/publico.css' %}">{% endblock %}
+
+{% block panel %}
+<p class="auth__titular">Empieza a llevar el control en tres pasos.</p>
+<p class="auth__bajada">Crea tu cuenta, registra a tus mascotas y anota cada compra: la aplicación suma y organiza todo por ti.</p>
+<ol class="auth__puntos">
+    <li><span class="icono-circulo auth__paso" aria-hidden="true">1</span><span><strong>Crea tu cuenta</strong>Solo necesitas un nombre de usuario y una contraseña.</span></li>
+    <li><span class="icono-circulo auth__paso" aria-hidden="true">2</span><span><strong>Registra a tus mascotas</strong>Especie, raza, edad y peso de cada una.</span></li>
+    <li><span class="icono-circulo auth__paso" aria-hidden="true">3</span><span><strong>Anota cada gasto</strong>Comida, medicamentos y juguetes con totales automáticos.</span></li>
+</ol>
+{% endblock %}
+
 {% block contenido %}
-<section class="tarjeta angosta">
-    <h1>Crear cuenta</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_div }}
-        <button type="submit" class="boton">Registrarme</button>
-    </form>
-    <p>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a></p>
-</section>
+<header class="auth__encabezado">
+    <h1>Crea tu cuenta</h1>
+    <p>Empieza a registrar los gastos y cuidados de tus mascotas en menos de un minuto.</p>
+</header>
+
+{% if form.non_field_errors %}
+<div class="alerta alerta--peligro" role="alert">
+    {% icono 'alerta' %}
+    <div>
+        <strong class="alerta__titulo">No pudimos crear tu cuenta</strong>
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+</div>
+{% elif form.errors %}
+<div class="alerta alerta--peligro" role="alert">
+    {% icono 'alerta' %}
+    <div>
+        <strong class="alerta__titulo">Revisa los campos marcados</strong>
+        <p>Corrige los datos resaltados para terminar tu registro.</p>
+    </div>
+</div>
+{% endif %}
+
+<form method="post" class="pila">
+    {% csrf_token %}
+    {% campo form.username %}
+    {% campo form.password1 %}
+    {% campo form.password2 %}
+    <button type="submit" class="btn btn--primario btn--lg btn--bloque auth__enviar">Crear cuenta {% icono 'derecha' %}</button>
+    <p class="auth__nota">{% icono 'escudo' 'icono--sm' %} Solo tú puedes ver la información de tus mascotas.</p>
+</form>
+
+<p class="auth__alterno">¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a></p>
 {% endblock %}

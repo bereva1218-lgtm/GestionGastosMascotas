@@ -1,14 +1,123 @@
 {% extends 'base.html' %}
-{% load ui %}
-{% block titulo %}{{ titulo }}{% endblock %}
+{% load ui static %}
+
+{# Al editar se usa form.initial: tras un envío con errores, object ya trae los valores sin guardar. #}
+{% block titulo %}{{ titulo }}{% if object %} · {{ form.initial.producto }}{% endif %}{% endblock %}
+
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/formularios.css' %}">{% endblock %}
+
+{% block migas %}
+<li><a href="{% url 'mascotas:gasto_lista' %}">Gastos</a></li>
+<li><span aria-current="page">{% if object %}Editar{% else %}Nuevo{% endif %}</span></li>
+{% endblock %}
+
+{% block accion_barra %}{% endblock %}
+
 {% block contenido %}
-<header class="pagina-encabezado"><div class="pagina-encabezado__texto"><h1>{{ titulo }}</h1></div></header>
-<form method="post" class="formulario" novalidate>
-    {% csrf_token %}
-    <section class="formulario__seccion">
-        <div class="formulario__seccion-texto"><h2>Datos</h2></div>
-        <div class="formulario__rejilla">{% for field in form %}{% campo field %}{% endfor %}</div>
-    </section>
-    <div class="formulario__acciones"><button type="submit" class="btn btn--primario">Guardar</button></div>
-</form>
+<div class="pagina-formulario">
+    <header class="pagina-encabezado">
+        <div class="pagina-encabezado__texto">
+            <span class="pagina-encabezado__antetitulo">Gastos</span>
+            <h1>{{ titulo }}</h1>
+            {% if object %}
+            <p>Corrige los datos de esta compra. El total se vuelve a calcular al guardar.</p>
+            {% with ini=form.initial %}
+            <div class="registro-actual celda-principal">
+                {% for categoria in form.fields.categoria.queryset %}{% if categoria.pk == ini.categoria %}<span class="icono-circulo {{ categoria|clase_categoria }}">{% icono 'paquete' 'icono--sm' %}</span>{% endif %}{% endfor %}
+                <span class="celda-principal__texto">
+                    <span class="celda-principal__titulo truncar">{{ ini.producto }}</span>
+                    <span class="celda-principal__sub truncar">{% for mascota in form.fields.mascota.queryset %}{% if mascota.pk == ini.mascota %}{{ mascota }} · {% endif %}{% endfor %}{% for categoria in form.fields.categoria.queryset %}{% if categoria.pk == ini.categoria %}{{ categoria }} · {% endif %}{% endfor %}{{ ini.fecha|date:"j \d\e F \d\e Y"|lower }}</span>
+                </span>
+                {# valor_total no es editable: object conserva el total guardado. #}
+                <span class="registro-actual__extremo fuerte">{{ object.valor_total|moneda }}</span>
+            </div>
+            {% endwith %}
+            {% else %}
+            <p>Registra una compra de comida, medicamentos o juguetes. El total se calcula automáticamente.</p>
+            {% endif %}
+        </div>
+        {% if object %}
+        <div class="pagina-encabezado__acciones">
+            <a class="btn btn--peligro-suave" href="{% url 'mascotas:gasto_eliminar' object.pk %}">{% icono 'eliminar' %} Eliminar</a>
+        </div>
+        {% endif %}
+    </header>
+
+    <form method="post" class="formulario" novalidate>
+        {% csrf_token %}
+        {% for oculto in form.hidden_fields %}{{ oculto }}{% endfor %}
+
+        {% if form.errors %}
+        <div class="alerta alerta--peligro" role="alert">
+            {% icono 'alerta' %}
+            <div class="alerta__contenido">
+                <strong class="alerta__titulo">No se pudo guardar el gasto</strong>
+                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                <ul class="alerta__lista">{% for campo in form.visible_fields %}{% if campo.errors %}<li><a href="#{{ campo.id_for_label }}">{{ campo.label }}</a>: {{ campo.errors|first }}</li>{% endif %}{% endfor %}</ul>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not form.fields.mascota.queryset.exists %}
+        <div class="alerta alerta--aviso">
+            {% icono 'alerta' %}
+            <div class="alerta__contenido">
+                <strong class="alerta__titulo">Primero necesitas una mascota activa</strong>
+                <p>Cada gasto pertenece a una mascota activa. <a href="{% url 'mascotas:mascota_crear' %}">Registra una mascota</a> o <a href="{% url 'mascotas:mascota_lista' %}?estado=retiradas">reactiva una retirada</a> y vuelve para anotar la compra.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <section class="formulario__seccion" aria-labelledby="seccion-compra">
+            <div class="formulario__seccion-texto">
+                <span class="icono-circulo formulario__seccion-icono">{% icono 'recibo' %}</span>
+                <h2 id="seccion-compra">Compra</h2>
+                <p>Qué compraste, para cuál de tus mascotas y en qué fecha.</p>
+            </div>
+            <div class="formulario__rejilla">
+                {% campo form.mascota %}
+                {% campo form.categoria %}
+                {% campo form.producto %}
+                {% campo form.fecha %}
+            </div>
+        </section>
+
+        <section class="formulario__seccion" aria-labelledby="seccion-valores">
+            <div class="formulario__seccion-texto">
+                <span class="icono-circulo formulario__seccion-icono">{% icono 'billetera' %}</span>
+                <h2 id="seccion-valores">Valores</h2>
+                <p>Indica cuántas unidades compraste y el precio de cada una.</p>
+            </div>
+            <div class="formulario__rejilla" data-calcular-total>
+                <div data-cantidad>{% campo form.cantidad %}</div>
+                <div data-valor-unitario>{% campo form.valor_unitario prefijo='$' %}</div>
+                <div class="resumen-calculo">
+                    <div>
+                        <p class="resumen-calculo__etiqueta fuerte">Total del gasto</p>
+                        <p class="resumen-calculo__formula">Cantidad × valor unitario</p>
+                    </div>
+                    <span class="resumen-calculo__valor" data-total aria-live="polite">{% if object %}{{ object.valor_total|moneda }}{% else %}—{% endif %}</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="formulario__seccion" aria-labelledby="seccion-detalles">
+            <div class="formulario__seccion-texto">
+                <span class="icono-circulo formulario__seccion-icono">{% icono 'nota' %}</span>
+                <h2 id="seccion-detalles">Detalles</h2>
+                <p>Información opcional que te ayuda a encontrar esta compra más adelante.</p>
+            </div>
+            <div class="formulario__rejilla">
+                {% campo form.proveedor %}
+                {% campo form.notas ancho='completo' %}
+            </div>
+        </section>
+
+        <div class="formulario__acciones">
+            <p class="formulario__acciones-nota">Los campos con <span class="campo__requerido">*</span> son obligatorios.</p>
+            <a class="btn btn--secundario" href="{% url 'mascotas:gasto_lista' %}">Cancelar</a>
+            <button type="submit" class="btn btn--primario">{% icono 'check' %} {% if object %}Guardar cambios{% else %}Guardar gasto{% endif %}</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

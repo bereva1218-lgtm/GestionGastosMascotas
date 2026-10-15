@@ -1,0 +1,68 @@
+/* Mascotas: listado en cuadrícula y ficha de detalle. Solo tokens (ver estilos.css). */
+
+/* ---------- Listado ---------- */
+.mascotas-buscador { width: min(320px, 100%); }
+.mascotas-resultado { margin-bottom: var(--e-4); }
+
+/* La cuadrícula es una lista semántica: cada tarjeta ocupa toda su celda. */
+.mascotas-cuadricula { margin: 0; padding: 0; list-style: none; }
+.mascotas-cuadricula > li { display: flex; min-width: 0; }
+.mascotas-cuadricula .tarjeta-mascota { flex: 1; min-width: 0; }
+.mascotas-cuadricula .tarjeta-mascota__cabeza { justify-content: space-between; align-items: flex-start; padding-bottom: var(--e-3); }
+
+.mascotas-tarjeta__cuerpo { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 0 var(--e-5) var(--e-4); }
+.mascotas-tarjeta__especie { font-size: var(--t-sm); color: var(--c-texto-2); }
+.mascotas-tarjeta__meta { margin-top: var(--e-1); font-size: var(--t-xs); color: var(--c-texto-3); }
+.tarjeta--atenuada .tarjeta-mascota__nombre { color: var(--c-texto-2); }
+
+.mascotas-tarjeta__datos { margin: 0; }
+.mascotas-tarjeta__datos dd {
+    margin: 2px 0 0; font-size: var(--t-md); font-weight: 650;
+    font-variant-numeric: tabular-nums; color: var(--c-texto); white-space: nowrap;
+}
+
+/* ---------- Ficha ---------- */
+/* Nombres largos (hasta 100 caracteres): la miga actual se recorta con puntos suspensivos
+   en lugar de desbordar la barra superior, y el título parte palabras muy largas. */
+.migas li:last-child { min-width: 0; }
+.migas li:last-child > [aria-current="page"] { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mascota-cabecera h1 { overflow-wrap: anywhere; }
+
+/* La tarjeta de perfil hace de encabezado de la página. */
+.mascota-cabecera > .tarjeta { flex: 1 1 100%; }
+
+/* Estadísticas con divisores de 1 px que se reacomodan bien cuando las celdas pasan a otra fila. */
+.mascota-cabecera .perfil__estadisticas {
+    display: flex; flex-wrap: wrap; gap: 1px; margin: 0;
+    background: var(--c-borde);
+    border-radius: 0 0 calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px);
+    overflow: hidden;
+}
+.mascota-cabecera .estadistica { flex: 1 1 170px; min-width: 0; border: 0; background: var(--c-superficie); }
+.mascota-cabecera .estadistica dd { margin-inline-start: 0; }
+.mascota-estadistica__meta { margin-top: 2px; font-size: var(--t-xs); color: var(--c-texto-3); }
+
+/* Tabla de gastos: total con el valor unitario debajo. */
+.mascota-gastos__total { display: inline-flex; flex-direction: column; align-items: flex-end; line-height: 1.35; }
+.mascota-pie__total { color: var(--c-texto); font-weight: 650; font-variant-numeric: tabular-nums; }
+
+/* Medicamentos: estado y acciones al final de cada fila. */
+.mascota-medicamento__extremo { display: flex; align-items: center; gap: var(--e-3); margin-left: auto; flex-shrink: 0; }
+.mascota-medicamento__acciones { display: flex; gap: var(--e-1); }
+.mascota-medicamento--finalizado .lista__titulo { color: var(--c-texto-2); }
+
+@media (max-width: 720px) {
+    .mascotas-buscador { width: 100%; }
+
+    /* Acciones del perfil a lo ancho, como las de .pagina-encabezado__acciones en móvil. */
+    .mascota-cabecera .perfil__acciones { width: 100%; }
+    .mascota-cabecera .perfil__acciones > * { flex: 1 1 auto; }
+    .mascota-cabecera .perfil__acciones .btn { width: 100%; }
+
+    /* En móvil, el producto encabeza la fila apilada, sin etiqueta y alineado a la izquierda. */
+    .tabla--apilable td.mascota-gastos__principal { justify-content: flex-start; text-align: left; margin-bottom: var(--e-1); }
+    .tabla--apilable td.mascota-gastos__principal::before { content: none; }
+
+    .mascota-medicamento { flex-wrap: wrap; }
+    .mascota-medicamento__extremo { width: 100%; justify-content: space-between; padding-left: calc(36px + var(--e-3)); }
+}

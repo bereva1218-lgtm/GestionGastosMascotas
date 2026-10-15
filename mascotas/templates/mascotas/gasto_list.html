@@ -1,44 +1,239 @@
 {% extends 'base.html' %}
+{% load static ui %}
+
 {% block titulo %}Gastos{% endblock %}
+
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/gastos.css' %}">{% endblock %}
+
+{% block migas %}<li><span aria-current="page">Gastos</span></li>{% endblock %}
+
 {% block contenido %}
-<div class="encabezado">
-    <h1>Gastos</h1>
-    <a class="boton" href="{% url 'mascotas:gasto_crear' %}">+ Registrar gasto</a>
-</div>
+<header class="pagina-encabezado">
+    <div class="pagina-encabezado__texto">
+        <span class="pagina-encabezado__antetitulo">Gestión</span>
+        <h1>Gastos</h1>
+        <p>Consulta, filtra y administra las compras de comida, medicamentos y juguetes de tus mascotas.</p>
+    </div>
+    <div class="pagina-encabezado__acciones">
+        <a class="btn btn--secundario" href="{% url 'mascotas:reportes' %}">{% icono 'grafico' %} Ver reportes</a>
+        <a class="btn btn--primario" href="{% url 'mascotas:gasto_crear' %}">{% icono 'plus' %} Registrar gasto</a>
+    </div>
+</header>
 
-<form method="get" class="filtros">
-    {{ filtro.non_field_errors }}
-    {% for campo in filtro %}
-    <label>{{ campo.label }} {{ campo }}</label>
-    {% endfor %}
-    <button type="submit" class="boton">Filtrar</button>
-    <a href="{% url 'mascotas:gasto_lista' %}" class="boton secundario">Limpiar</a>
+{% if gastos or filtrando %}
+<section class="kpis gastos-kpis" aria-label="Resumen de los gastos">
+    <article class="kpi">
+        <div class="kpi__cabeza">
+            <span class="kpi__etiqueta">Total</span>
+            <span class="kpi__icono">{% icono 'billetera' %}</span>
+        </div>
+        <span class="kpi__valor kpi__valor--md">{{ total|moneda }}</span>
+        <span class="kpi__meta">{% if filtrando and filtro.is_valid %}Con los filtros aplicados{% else %}De todos tus gastos{% endif %}</span>
+    </article>
+    <article class="kpi">
+        <div class="kpi__cabeza">
+            <span class="kpi__etiqueta">Registros</span>
+            <span class="kpi__icono kpi__icono--info">{% icono 'recibo' %}</span>
+        </div>
+        <span class="kpi__valor kpi__valor--md">{{ cantidad|floatformat:"g" }}</span>
+        <span class="kpi__meta">{% if is_paginated %}{{ paginator.per_page }} por página · {{ paginator.num_pages }} páginas{% else %}Gasto{{ cantidad|pluralize }} encontrado{{ cantidad|pluralize }}{% endif %}</span>
+    </article>
+    <article class="kpi">
+        <div class="kpi__cabeza">
+            <span class="kpi__etiqueta">Promedio por gasto</span>
+            <span class="kpi__icono kpi__icono--juguetes">{% icono 'actividad' %}</span>
+        </div>
+        <span class="kpi__valor kpi__valor--md">{{ promedio|moneda }}</span>
+        <span class="kpi__meta">Valor medio de cada registro</span>
+    </article>
+</section>
+
+<form class="filtros gastos-filtros" method="get" role="search" aria-label="Filtrar gastos">
+    {% if filtro.errors %}
+    <div class="filtros__errores alerta alerta--peligro" role="alert">
+        {% icono 'alerta' %}
+        <div>
+            <strong class="alerta__titulo">No se aplicaron los filtros</strong>
+            {% for error in filtro.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+            <p>Revisa los campos marcados e inténtalo de nuevo. Mientras tanto, te mostramos todos tus gastos sin filtrar.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="campo gastos-filtros__busqueda{% if filtro.q.errors %} campo--error{% endif %}">
+        <label class="campo__etiqueta" for="{{ filtro.q.id_for_label }}">{{ filtro.q.label }}</label>
+        <div class="buscador">{% icono 'buscar' %}{{ filtro.q }}</div>
+        {% for error in filtro.q.errors %}<p class="campo__error" role="alert">{{ error }}</p>{% endfor %}
+    </div>
+    {% campo filtro.mascota %}
+    {% campo filtro.categoria %}
+    {% with rango_invalido=filtro.non_field_errors %}
+    <div class="campo{% if filtro.desde.errors or rango_invalido %} campo--error{% endif %}">
+        <label class="campo__etiqueta" for="{{ filtro.desde.id_for_label }}">{{ filtro.desde.label }}</label>
+        {{ filtro.desde }}
+        {% for error in filtro.desde.errors %}<p class="campo__error" role="alert">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="campo{% if filtro.hasta.errors or rango_invalido %} campo--error{% endif %}">
+        <label class="campo__etiqueta" for="{{ filtro.hasta.id_for_label }}">{{ filtro.hasta.label }}</label>
+        {{ filtro.hasta }}
+        {% for error in filtro.hasta.errors %}<p class="campo__error" role="alert">{{ error }}</p>{% endfor %}
+    </div>
+    {% endwith %}
+
+    <div class="filtros__acciones">
+        <button type="submit" class="btn btn--primario">{% icono 'filtro' %} Filtrar</button>
+        {% if filtrando %}<a class="btn btn--fantasma" href="{% url 'mascotas:gasto_lista' %}">Limpiar</a>{% endif %}
+    </div>
 </form>
-
-<p class="total">Total filtrado: <strong>$ {{ total|floatformat:"2g" }}</strong> ({{ gastos|length }} registro{{ gastos|length|pluralize }})</p>
-
-{% if gastos %}
-<table>
-    <thead><tr><th>Fecha</th><th>Mascota</th><th>Producto</th><th>Categoría</th><th class="num">Cantidad</th><th class="num">V. unitario</th><th class="num">Total</th><th></th></tr></thead>
-    <tbody>
-    {% for gasto in gastos %}
-        <tr>
-            <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
-            <td>{{ gasto.mascota }}</td>
-            <td>{{ gasto.producto }}</td>
-            <td>{{ gasto.categoria }}</td>
-            <td class="num">{{ gasto.cantidad|floatformat:"-2" }}</td>
-            <td class="num">$ {{ gasto.valor_unitario|floatformat:"2g" }}</td>
-            <td class="num">$ {{ gasto.valor_total|floatformat:"2g" }}</td>
-            <td class="fila-acciones">
-                <a href="{% url 'mascotas:gasto_editar' gasto.pk %}">Editar</a>
-                <a href="{% url 'mascotas:gasto_eliminar' gasto.pk %}" class="texto-peligro">Eliminar</a>
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p class="vacio">No hay gastos con estos filtros.</p>
 {% endif %}
+
+<section class="tarjeta" aria-labelledby="titulo-listado">
+    <h2 class="oculto-visual" id="titulo-listado">Listado de gastos</h2>
+
+    {% if gastos or filtrando and filtro.is_valid %}
+    <div class="resumen-franja">
+        {% if not gastos %}
+        <span><strong>0</strong> gastos con los filtros aplicados</span>
+        {% elif page_obj.paginator.count == 1 %}
+        <span>Mostrando <strong>1</strong> gasto</span>
+        {% else %}
+        <span>Mostrando <strong>{{ page_obj.start_index|floatformat:"g" }}–{{ page_obj.end_index|floatformat:"g" }}</strong> de <strong>{{ page_obj.paginator.count|floatformat:"g" }}</strong> gastos</span>
+        {% endif %}
+
+        {% if filtrando and filtro.is_valid %}
+        {% with datos=filtro.cleaned_data %}
+        <ul class="filtros-activos" aria-label="Filtros aplicados">
+            {% if datos.q %}
+            <li><a class="insignia insignia--borde filtro-activo" href="{% querystring q=None page=None %}" title="Quitar este filtro" aria-label="Quitar la búsqueda «{{ datos.q }}»"><span class="filtro-activo__clave">Búsqueda</span> <span class="filtro-activo__valor truncar">«{{ datos.q }}»</span> {% icono 'cerrar' %}</a></li>
+            {% endif %}
+            {% if datos.mascota %}
+            <li><a class="insignia insignia--borde filtro-activo" href="{% querystring mascota=None page=None %}" title="Quitar este filtro" aria-label="Quitar el filtro de mascota {{ datos.mascota }}"><span class="filtro-activo__clave">Mascota</span> <span class="filtro-activo__valor truncar">{{ datos.mascota }}</span> {% icono 'cerrar' %}</a></li>
+            {% endif %}
+            {% if datos.categoria %}
+            <li><a class="insignia insignia--borde filtro-activo" href="{% querystring categoria=None page=None %}" title="Quitar este filtro" aria-label="Quitar el filtro de categoría {{ datos.categoria }}"><span class="filtro-activo__clave">Categoría</span> {{ datos.categoria }} {% icono 'cerrar' %}</a></li>
+            {% endif %}
+            {% if datos.desde %}
+            <li><a class="insignia insignia--borde filtro-activo" href="{% querystring desde=None page=None %}" title="Quitar este filtro" aria-label="Quitar la fecha inicial {{ datos.desde|date:'j \d\e F \d\e Y'|lower }}"><span class="filtro-activo__clave">Desde</span> {{ datos.desde|date:"d M Y" }} {% icono 'cerrar' %}</a></li>
+            {% endif %}
+            {% if datos.hasta %}
+            <li><a class="insignia insignia--borde filtro-activo" href="{% querystring hasta=None page=None %}" title="Quitar este filtro" aria-label="Quitar la fecha final {{ datos.hasta|date:'j \d\e F \d\e Y'|lower }}"><span class="filtro-activo__clave">Hasta</span> {{ datos.hasta|date:"d M Y" }} {% icono 'cerrar' %}</a></li>
+            {% endif %}
+        </ul>
+        {% endwith %}
+        {% endif %}
+
+        {% if gastos %}
+        <span class="empuja fila fila--sm texto-tenue texto-xs">{% icono 'calendario' 'icono--sm' %} Del más reciente al más antiguo</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if gastos %}
+    <div class="tabla-contenedor">
+        <table class="tabla tabla--apilable">
+            <caption class="oculto-visual">Gastos{% if is_paginated %}, página {{ page_obj.number }} de {{ paginator.num_pages }}{% endif %}</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Producto</th>
+                    <th scope="col">Mascota</th>
+                    <th scope="col">Categoría</th>
+                    <th scope="col" class="num">Fecha</th>
+                    <th scope="col" class="num">Cantidad</th>
+                    <th scope="col" class="num">Valor unitario</th>
+                    <th scope="col" class="num">Total</th>
+                    <th scope="col"><span class="oculto-visual">Acciones</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gasto in gastos %}
+                {% with mascota=gasto.mascota categoria=gasto.categoria %}
+                <tr>
+                    <td data-label="Producto" class="gastos-producto">
+                        <div class="celda-principal">
+                            <span class="icono-circulo {{ categoria|clase_categoria }}">
+                                {% if categoria.nombre == 'Comida' %}{% icono 'comida' 'icono--sm' %}{% elif categoria.nombre == 'Medicamentos' %}{% icono 'pastilla' 'icono--sm' %}{% elif categoria.nombre == 'Juguetes' %}{% icono 'regalo' 'icono--sm' %}{% else %}{% icono 'paquete' 'icono--sm' %}{% endif %}
+                            </span>
+                            <span class="celda-principal__texto">
+                                <a class="celda-principal__titulo" href="{% url 'mascotas:gasto_editar' gasto.pk %}">{{ gasto.producto }}</a>
+                                {% if gasto.proveedor %}<span class="celda-principal__sub">{{ gasto.proveedor }}</span>{% endif %}
+                            </span>
+                        </div>
+                    </td>
+                    <td data-label="Mascota">
+                        <span class="fila fila--sm gastos-mascota">
+                            <span class="avatar avatar--xs {{ mascota|tono }}{% if not mascota.activa %} avatar--inactivo{% endif %}" aria-hidden="true">{{ mascota.nombre|inicial }}</span>
+                            <a class="gastos-mascota__enlace truncar" href="{{ mascota.get_absolute_url }}" title="{{ mascota.nombre }}">{{ mascota.nombre }}</a>
+                            {% if not mascota.activa %}<span class="texto-xs texto-tenue">Retirada</span>{% endif %}
+                        </span>
+                    </td>
+                    <td data-label="Categoría"><span class="insignia {{ categoria|clase_categoria }}">{{ categoria }}</span></td>
+                    <td data-label="Fecha" class="num texto-2">{{ gasto.fecha|date:"d M Y" }}</td>
+                    <td data-label="Cantidad" class="num">{{ gasto.cantidad|floatformat:"-2g" }}</td>
+                    <td data-label="Valor unitario" class="num texto-2">{{ gasto.valor_unitario|moneda }}</td>
+                    <td data-label="Total" class="num fuerte">{{ gasto.valor_total|moneda }}</td>
+                    <td class="tabla__acciones">
+                        <div class="fila">
+                            <a class="btn btn--icono btn--fantasma btn--sm" href="{% url 'mascotas:gasto_editar' gasto.pk %}" aria-label="Editar el gasto {{ gasto.producto }} de {{ mascota.nombre }}" title="Editar">{% icono 'editar' 'icono--sm' %}</a>
+                            <a class="btn btn--icono btn--peligro-suave btn--sm" href="{% url 'mascotas:gasto_eliminar' gasto.pk %}" aria-label="Eliminar el gasto {{ gasto.producto }} de {{ mascota.nombre }}" title="Eliminar">{% icono 'eliminar' 'icono--sm' %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endwith %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <nav class="tarjeta__pie paginacion" aria-label="Paginación de gastos">
+        <span>Página <strong>{{ page_obj.number }}</strong> de <strong>{{ paginator.num_pages }}</strong></span>
+        <div class="paginacion__paginas">
+            {% if page_obj.has_previous %}
+            <a href="{% querystring page=page_obj.previous_page_number %}" rel="prev" aria-label="Página anterior" title="Página anterior">{% icono 'izquierda' 'icono--sm' %}</a>
+            {% else %}
+            <span class="deshabilitado" aria-hidden="true">{% icono 'izquierda' 'icono--sm' %}</span>
+            {% endif %}
+
+            {% for numero in paginator.page_range %}
+                {% if numero == page_obj.number %}
+                <span class="paginacion__numero" aria-current="page">{{ numero }}</span>
+                {% elif numero == 1 or numero == paginator.num_pages %}
+                <a class="paginacion__numero" href="{% querystring page=numero %}" aria-label="Ir a la página {{ numero }}">{{ numero }}</a>
+                {% elif numero >= page_obj.number|add:-1 and numero <= page_obj.number|add:1 %}
+                <a class="paginacion__numero" href="{% querystring page=numero %}" aria-label="Ir a la página {{ numero }}">{{ numero }}</a>
+                {% elif numero == page_obj.number|add:-2 or numero == page_obj.number|add:2 %}
+                    {% if numero == 2 or numero == paginator.num_pages|add:-1 %}
+                    <a class="paginacion__numero" href="{% querystring page=numero %}" aria-label="Ir a la página {{ numero }}">{{ numero }}</a>
+                    {% else %}
+                    <span class="paginacion__elipsis" aria-hidden="true">…</span>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="{% querystring page=page_obj.next_page_number %}" rel="next" aria-label="Página siguiente" title="Página siguiente">{% icono 'derecha' 'icono--sm' %}</a>
+            {% else %}
+            <span class="deshabilitado" aria-hidden="true">{% icono 'derecha' 'icono--sm' %}</span>
+            {% endif %}
+        </div>
+    </nav>
+    {% endif %}
+
+    {% elif filtrando and filtro.is_valid %}
+    <div class="vacio">
+        <span class="vacio__icono">{% icono 'buscar' 'icono--lg' %}</span>
+        <p class="vacio__titulo">Ningún gasto coincide con los filtros</p>
+        <p class="vacio__texto">Prueba con otro rango de fechas, otra mascota u otra categoría, o quita alguno de los filtros aplicados.</p>
+        <a class="btn btn--secundario" href="{% url 'mascotas:gasto_lista' %}">{% icono 'restaurar' %} Limpiar filtros</a>
+    </div>
+
+    {% else %}
+    <div class="vacio">
+        <span class="vacio__icono">{% icono 'recibo' 'icono--lg' %}</span>
+        <p class="vacio__titulo">Aún no hay gastos</p>
+        <p class="vacio__texto">Registra la primera compra de comida, medicamentos o juguetes. El total se calcula automáticamente a partir de la cantidad y el valor unitario.</p>
+        <a class="btn btn--primario" href="{% url 'mascotas:gasto_crear' %}">{% icono 'plus' %} Registrar gasto</a>
+    </div>
+    {% endif %}
+</section>
 {% endblock %}

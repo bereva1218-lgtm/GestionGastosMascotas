@@ -92,6 +92,30 @@ Decisiones:
 - Las pruebas crean usuarios sin contraseña y usan `force_login` (sin el costo
   de calcular hashes).
 
+### 2026-10-15 — Rediseño profesional del frontend
+
+- Sistema de diseño documentado en `Context/DisenoUI.md`: tokens con modo
+  claro/oscuro, barra lateral, componentes (indicadores, tablas apilables,
+  formularios por secciones, insignias, gráficos en CSS) e iconos SVG.
+- Librería de plantillas `mascotas/templatetags/ui.py` (`icono`, `moneda`,
+  `edad`, `campo`, `clase_categoria`, `tono`…).
+- Panel de inicio con tendencia de 6 meses (reutiliza `total_mensual`),
+  variación frente al mes anterior, distribución por categoría y tratamientos.
+- Nuevas reglas puras con pruebas: `variacion_porcentual`, `ultimos_meses`,
+  `calcular_edad`; propiedades `Medicamento.activo` y `dias_restantes`.
+- Mascotas con búsqueda y filtro por estado; gastos con búsqueda y paginación;
+  reportes con rangos predefinidos e impresión; páginas 404/403/500 propias.
+- Las vistas se rediseñaron por grupos (acceso, mascotas, formularios, gastos,
+  medicamentos, reportes) con revisión cruzada; `test_ui.py` recorre todas las
+  páginas como prueba de humo.
+
+Decisiones:
+
+- **Sin librerías de frontend:** CSS propio con tokens y gráficos con CSS
+  (`widthratio`), para no depender de internet ni de un empaquetador. Solo la
+  fuente Inter se carga de Google Fonts (con respaldo a fuentes del sistema).
+- En los indicadores de gasto, **subir es rojo y bajar es verde**.
+
 ## Próximos pasos
 
 1. Edición de datos básicos del usuario (módulo de usuarios).

@@ -782,7 +782,7 @@ a.celda-principal__titulo:hover { color: var(--c-primario); }
 
 @media (max-width: 720px) {
     h1 { font-size: var(--t-lg); }
-    .kpi__valor { font-size: var(--t-xl); }
+    .kpi__valor, .kpi__valor--md { font-size: var(--t-lg); }
     .filtros { grid-template-columns: minmax(0, 1fr); padding: var(--e-4); }
     .formulario__rejilla { grid-template-columns: minmax(0, 1fr); }
     .formulario__acciones { justify-content: stretch; }
@@ -796,6 +796,12 @@ a.celda-principal__titulo:hover { color: var(--c-primario); }
     .ficha dd { margin-bottom: var(--e-2); }
     .estadistica { border-right: 0; border-bottom: 1px solid var(--c-borde); }
     .migas li:not(:last-child) { display: none; }
+    .migas li:last-child::before { content: none; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-3); }
+    .kpi { padding: var(--e-4); gap: var(--e-1); }
+    .kpi__icono { width: 32px; height: 32px; }
+    .kpi__etiqueta { font-size: var(--t-xs); }
+    .kpi__meta { font-size: var(--t-xs); }
     .barra-superior__texto-btn { display: none; }
 
     /* Tablas apilables: cada <td> necesita data-label. */

@@ -1,85 +1,303 @@
 {% extends 'base.html' %}
+{% load static ui %}
+
 {% block titulo %}{{ mascota.nombre }}{% endblock %}
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/mascotas.css' %}">{% endblock %}
+{% block migas %}
+<li><a href="{% url 'mascotas:mascota_lista' %}">Mascotas</a></li>
+<li><span aria-current="page">{{ mascota.nombre }}</span></li>
+{% endblock %}
+
+{% block accion_barra %}
+{% if mascota.activa %}
+<a class="btn btn--primario btn--sm" href="{% url 'mascotas:gasto_crear' %}?mascota={{ mascota.pk }}" aria-label="Registrar gasto para {{ mascota.nombre }}">{% icono 'plus' 'icono--sm' %}<span class="barra-superior__texto-btn">Registrar gasto</span></a>
+{% else %}{{ block.super }}{% endif %}
+{% endblock %}
+
 {% block contenido %}
-<div class="encabezado">
-    <h1>{{ mascota.nombre }}{% if not mascota.activa %} <small class="etiqueta-estado">Retirada</small>{% endif %}</h1>
-    <div class="acciones">
-        <a class="boton secundario" href="{% url 'mascotas:mascota_editar' mascota.pk %}">Editar</a>
-        {% if mascota.activa %}
-        <form method="post" action="{% url 'mascotas:mascota_retirar' mascota.pk %}" class="en-linea">
-            {% csrf_token %}<button type="submit" class="boton secundario">Retirar</button>
-        </form>
-        {% else %}
-        <form method="post" action="{% url 'mascotas:mascota_reactivar' mascota.pk %}" class="en-linea">
-            {% csrf_token %}<button type="submit" class="boton secundario">Reactivar</button>
-        </form>
-        {% endif %}
-        <a class="boton peligro" href="{% url 'mascotas:mascota_eliminar' mascota.pk %}">Eliminar</a>
+{% with edad_texto=mascota.fecha_nacimiento|edad num_gastos=gastos|length num_medicamentos=medicamentos|length %}
+<header class="pagina-encabezado mascota-cabecera">
+    <div class="tarjeta">
+        <div class="perfil">
+            <span class="avatar avatar--xl {{ mascota|tono }}{% if not mascota.activa %} avatar--inactivo{% endif %}" aria-hidden="true">{{ mascota.nombre|inicial }}</span>
+            <div class="perfil__datos">
+                <span class="pagina-encabezado__antetitulo">Ficha de mascota</span>
+                <div class="perfil__nombre">
+                    <h1>{{ mascota.nombre }}</h1>
+                    {% if mascota.activa %}
+                    <span class="insignia insignia--exito"><span class="insignia__punto"></span>Activa</span>
+                    {% else %}
+                    <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Retirada</span>
+                    {% endif %}
+                </div>
+                <p class="perfil__meta">
+                    <span>{% icono 'huella' %} {{ mascota.especie }}{% if mascota.raza %} · {{ mascota.raza }}{% endif %}</span>
+                    <span>{% icono 'etiqueta' %} {{ mascota.get_sexo_display }}</span>
+                    {% if edad_texto %}<span>{% icono 'calendario' %} {{ edad_texto }}</span>{% endif %}
+                    {% if mascota.peso %}<span>{% icono 'peso' %} {{ mascota.peso.normalize }} kg</span>{% endif %}
+                </p>
+            </div>
+            <div class="perfil__acciones">
+                <a class="btn btn--secundario" href="{% url 'mascotas:mascota_editar' mascota.pk %}">{% icono 'editar' %} Editar</a>
+                {% if mascota.activa %}
+                <form method="post" action="{% url 'mascotas:mascota_retirar' mascota.pk %}" class="form-en-linea">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn--secundario" title="Conserva su historial y deja de ofrecerla al registrar gastos">{% icono 'archivar' %} Retirar</button>
+                </form>
+                {% else %}
+                <form method="post" action="{% url 'mascotas:mascota_reactivar' mascota.pk %}" class="form-en-linea">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn--primario">{% icono 'restaurar' %} Reactivar</button>
+                </form>
+                {% endif %}
+                <a class="btn btn--peligro-suave" href="{% url 'mascotas:mascota_eliminar' mascota.pk %}" title="Solo es posible si no tiene gastos ni medicamentos registrados">{% icono 'eliminar' %} Eliminar</a>
+            </div>
+        </div>
+
+        <dl class="perfil__estadisticas">
+            <div class="estadistica">
+                <dt class="estadistica__etiqueta">Total gastado</dt>
+                <dd class="estadistica__valor">{{ total_gastos|moneda }}</dd>
+                <dd class="mascota-estadistica__meta">En todo el historial</dd>
+            </div>
+            <div class="estadistica">
+                <dt class="estadistica__etiqueta">Gastado este mes</dt>
+                <dd class="estadistica__valor">{{ total_mes|moneda }}</dd>
+                <dd class="mascota-estadistica__meta">{% now "F \d\e Y" as mes_actual %}{{ mes_actual|lower|capfirst }}</dd>
+            </div>
+            <div class="estadistica">
+                <dt class="estadistica__etiqueta">Gastos registrados</dt>
+                <dd class="estadistica__valor">{{ num_gastos }}</dd>
+                <dd class="mascota-estadistica__meta">{% if num_gastos %}{% with n=por_categoria|length %}En {{ n }} categoría{{ n|pluralize }}{% endwith %}{% else %}Sin registros{% endif %}</dd>
+            </div>
+            <div class="estadistica">
+                <dt class="estadistica__etiqueta">Tratamientos activos</dt>
+                <dd class="estadistica__valor">{{ medicamentos_activos }}</dd>
+                <dd class="mascota-estadistica__meta">{% if num_medicamentos %}De {{ num_medicamentos }} registrado{{ num_medicamentos|pluralize }}{% else %}Sin medicamentos{% endif %}</dd>
+            </div>
+            <div class="estadistica">
+                <dt class="estadistica__etiqueta">Último gasto</dt>
+                {% if ultimo_gasto %}
+                <dd class="estadistica__valor">{{ ultimo_gasto.fecha|date:"d M Y" }}</dd>
+                <dd class="mascota-estadistica__meta truncar" title="{{ ultimo_gasto.producto }}">{{ ultimo_gasto.producto }}</dd>
+                {% else %}
+                <dd class="estadistica__valor texto-tenue"><span aria-hidden="true">—</span><span class="oculto-visual">Ninguno</span></dd>
+                <dd class="mascota-estadistica__meta">Sin gastos todavía</dd>
+                {% endif %}
+            </div>
+        </dl>
+    </div>
+</header>
+
+<div class="pila pila--lg">
+    {% if not mascota.activa %}
+    <div class="alerta alerta--info">
+        {% icono 'info' %}
+        <div>
+            <div class="alerta__titulo">Esta mascota está retirada</div>
+            <p>Su historial de gastos y medicamentos se conserva y sigue contando en tus reportes, pero no puedes registrarle gastos ni medicamentos nuevos. Reactívala si vuelve a estar a tu cargo.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="rejilla-panel">
+        <div class="pila pila--lg">
+            <section class="tarjeta" aria-labelledby="titulo-gastos">
+                <header class="tarjeta__encabezado">
+                    <div>
+                        <h2 class="tarjeta__titulo" id="titulo-gastos">{% icono 'recibo' %} Gastos</h2>
+                        <p class="tarjeta__subtitulo">{% if num_gastos %}{{ num_gastos }} registro{{ num_gastos|pluralize }}, del más reciente al más antiguo{% else %}Compras de comida, medicamentos y juguetes{% endif %}</p>
+                    </div>
+                    {% if mascota.activa and num_gastos %}
+                    <a class="btn btn--secundario btn--sm" href="{% url 'mascotas:gasto_crear' %}?mascota={{ mascota.pk }}" aria-label="Registrar gasto para {{ mascota.nombre }}">{% icono 'plus' 'icono--sm' %} Gasto</a>
+                    {% endif %}
+                </header>
+                {% if num_gastos %}
+                <div class="tabla-contenedor">
+                    <table class="tabla tabla--apilable">
+                        <caption class="oculto-visual">Gastos de {{ mascota.nombre }}</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Producto</th>
+                                <th scope="col">Categoría</th>
+                                <th scope="col">Fecha</th>
+                                <th scope="col" class="num"><abbr title="Cantidad">Cant.</abbr></th>
+                                <th scope="col" class="num">Total</th>
+                                <th scope="col"><span class="oculto-visual">Acciones</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gasto in gastos %}
+                            {% with clase=gasto.categoria|clase_categoria %}
+                            <tr>
+                                <td data-label="Producto" class="mascota-gastos__principal">
+                                    <div class="celda-principal">
+                                        <span class="icono-circulo {{ clase }}">{% if clase == 'cat-comida' %}{% icono 'comida' 'icono--sm' %}{% elif clase == 'cat-medicamentos' %}{% icono 'pastilla' 'icono--sm' %}{% elif clase == 'cat-juguetes' %}{% icono 'regalo' 'icono--sm' %}{% else %}{% icono 'paquete' 'icono--sm' %}{% endif %}</span>
+                                        <span class="celda-principal__texto">
+                                            <a class="celda-principal__titulo" href="{% url 'mascotas:gasto_editar' gasto.pk %}">{{ gasto.producto }}</a>
+                                            {% if gasto.proveedor %}<span class="celda-principal__sub">{{ gasto.proveedor }}</span>{% endif %}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td data-label="Categoría"><span class="insignia {{ clase }}">{{ gasto.categoria }}</span></td>
+                                <td data-label="Fecha" class="num texto-2">{{ gasto.fecha|date:"d M Y" }}</td>
+                                <td data-label="Cantidad" class="num">{{ gasto.cantidad|floatformat:"-2g" }}</td>
+                                <td data-label="Total" class="num">
+                                    <span class="mascota-gastos__total">
+                                        <span class="fuerte">{{ gasto.valor_total|moneda }}</span>
+                                        {% if gasto.cantidad != 1 %}<span class="celda-principal__sub">{{ gasto.valor_unitario|moneda }} c/u</span>{% endif %}
+                                    </span>
+                                </td>
+                                <td class="tabla__acciones">
+                                    <div class="fila">
+                                        <a class="btn btn--icono btn--fantasma btn--sm" href="{% url 'mascotas:gasto_editar' gasto.pk %}" aria-label="Editar gasto {{ gasto.producto }}" title="Editar">{% icono 'editar' 'icono--sm' %}</a>
+                                        <a class="btn btn--icono btn--peligro-suave btn--sm" href="{% url 'mascotas:gasto_eliminar' gasto.pk %}" aria-label="Eliminar gasto {{ gasto.producto }}" title="Eliminar">{% icono 'eliminar' 'icono--sm' %}</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <footer class="tarjeta__pie">
+                    <span>Total acumulado <span class="mascota-pie__total">{{ total_gastos|moneda }}</span></span>
+                    <a class="btn btn--fantasma btn--sm" href="{% url 'mascotas:gasto_lista' %}?mascota={{ mascota.pk }}">Ver en el listado {% icono 'derecha' 'icono--sm' %}</a>
+                </footer>
+                {% else %}
+                <div class="vacio">
+                    <span class="vacio__icono">{% icono 'recibo' 'icono--lg' %}</span>
+                    <p class="vacio__titulo">Sin gastos registrados</p>
+                    {% if mascota.activa %}
+                    <p class="vacio__texto">Registra la primera compra de comida, medicamentos o juguetes de {{ mascota.nombre }}.</p>
+                    <a class="btn btn--primario" href="{% url 'mascotas:gasto_crear' %}?mascota={{ mascota.pk }}">{% icono 'plus' %} Registrar gasto</a>
+                    {% else %}
+                    <p class="vacio__texto">Reactiva esta mascota si quieres registrarle gastos.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="tarjeta" aria-labelledby="titulo-medicamentos">
+                <header class="tarjeta__encabezado">
+                    <div>
+                        <h2 class="tarjeta__titulo" id="titulo-medicamentos">{% icono 'pastilla' %} Medicamentos</h2>
+                        <p class="tarjeta__subtitulo">{% if num_medicamentos %}{{ medicamentos_activos }} en curso de {{ num_medicamentos }} registrado{{ num_medicamentos|pluralize }}{% else %}Tratamientos, dosis y frecuencia{% endif %}</p>
+                    </div>
+                    {% if mascota.activa and num_medicamentos %}
+                    <a class="btn btn--secundario btn--sm" href="{% url 'mascotas:medicamento_crear' %}?mascota={{ mascota.pk }}" aria-label="Registrar medicamento para {{ mascota.nombre }}">{% icono 'plus' 'icono--sm' %} Medicamento</a>
+                    {% endif %}
+                </header>
+                {% if num_medicamentos %}
+                {% now "Y-m-d" as hoy_iso %}
+                <ul class="lista">
+                    {% for medicamento in medicamentos %}
+                    {% with dias=medicamento.dias_restantes %}
+                    <li class="lista__item mascota-medicamento{% if not medicamento.activo %} mascota-medicamento--finalizado{% endif %}">
+                        <span class="icono-circulo{% if medicamento.activo %} cat-medicamentos{% endif %}">{% icono 'pastilla' 'icono--sm' %}</span>
+                        <span class="lista__texto">
+                            <a class="lista__titulo" href="{% url 'mascotas:medicamento_editar' medicamento.pk %}">{{ medicamento.nombre }}</a>
+                            <span class="lista__sub">{{ medicamento.dosis }} · {{ medicamento.frecuencia }} · {% if medicamento.fecha_fin %}{{ medicamento.fecha_inicio|date:"d M Y" }} – {{ medicamento.fecha_fin|date:"d M Y" }}{% else %}Desde el {{ medicamento.fecha_inicio|date:"d M Y" }}{% endif %}</span>
+                        </span>
+                        <span class="mascota-medicamento__extremo">
+                            {# Mismas reglas que el listado de medicamentos; las fechas ISO se comparan como texto. #}
+                            {% if medicamento.fecha_inicio|date:"Y-m-d" > hoy_iso %}
+                            <span class="insignia insignia--primario"><span class="insignia__punto"></span>Programado</span>
+                            {% elif dias is None %}
+                            <span class="insignia insignia--info"><span class="insignia__punto"></span>Continuo</span>
+                            {% elif dias < 0 %}
+                            <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Finalizado</span>
+                            {% elif dias == 0 %}
+                            <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Termina hoy</span>
+                            {% elif dias <= 3 %}
+                            <span class="insignia insignia--aviso"><span class="insignia__punto"></span>Queda{{ dias|pluralize:"n" }} {{ dias }} día{{ dias|pluralize }}</span>
+                            {% else %}
+                            <span class="insignia insignia--exito"><span class="insignia__punto"></span>Quedan {{ dias }} días</span>
+                            {% endif %}
+                            <span class="mascota-medicamento__acciones">
+                                <a class="btn btn--icono btn--fantasma btn--sm" href="{% url 'mascotas:medicamento_editar' medicamento.pk %}" aria-label="Editar medicamento {{ medicamento.nombre }}" title="Editar">{% icono 'editar' 'icono--sm' %}</a>
+                                <a class="btn btn--icono btn--peligro-suave btn--sm" href="{% url 'mascotas:medicamento_eliminar' medicamento.pk %}" aria-label="Eliminar medicamento {{ medicamento.nombre }}" title="Eliminar">{% icono 'eliminar' 'icono--sm' %}</a>
+                            </span>
+                        </span>
+                    </li>
+                    {% endwith %}
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="vacio vacio--compacto">
+                    <span class="vacio__icono">{% icono 'pastilla' 'icono--lg' %}</span>
+                    <p class="vacio__titulo">Sin medicamentos registrados</p>
+                    {% if mascota.activa %}
+                    <p class="vacio__texto">Registra los tratamientos de {{ mascota.nombre }} para seguir su dosis, frecuencia y duración.</p>
+                    <a class="btn btn--secundario btn--sm" href="{% url 'mascotas:medicamento_crear' %}?mascota={{ mascota.pk }}">{% icono 'plus' 'icono--sm' %} Registrar medicamento</a>
+                    {% else %}
+                    <p class="vacio__texto">Reactiva esta mascota si quieres registrarle medicamentos.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </section>
+        </div>
+
+        <div class="pila pila--lg">
+            <section class="tarjeta" aria-labelledby="titulo-ficha">
+                <header class="tarjeta__encabezado">
+                    <h2 class="tarjeta__titulo" id="titulo-ficha">{% icono 'nota' %} Ficha</h2>
+                    <a class="btn btn--fantasma btn--sm" href="{% url 'mascotas:mascota_editar' mascota.pk %}" aria-label="Editar la ficha de {{ mascota.nombre }}">{% icono 'editar' 'icono--sm' %} Editar</a>
+                </header>
+                <div class="tarjeta__cuerpo">
+                    <dl class="ficha">
+                        <dt>{% icono 'calendario' %} Nacimiento</dt>
+                        <dd>
+                            {% if mascota.fecha_nacimiento %}
+                            {{ mascota.fecha_nacimiento|date:"j \d\e F \d\e Y"|lower }}{% if edad_texto %} <span class="texto-tenue">· {{ edad_texto }}</span>{% endif %}
+                            {% else %}<span class="texto-tenue">Sin registrar</span>{% endif %}
+                        </dd>
+                        <dt>{% icono 'peso' %} Peso</dt>
+                        <dd>{% if mascota.peso %}{{ mascota.peso.normalize }} kg{% else %}<span class="texto-tenue">Sin registrar</span>{% endif %}</dd>
+                        <dt>{% icono 'palette' %} Color</dt>
+                        <dd>{% if mascota.color %}{{ mascota.color }}{% else %}<span class="texto-tenue">Sin registrar</span>{% endif %}</dd>
+                        <dt>{% icono 'salud' %} Estado de salud</dt>
+                        <dd>{% if mascota.estado_salud %}{{ mascota.estado_salud }}{% else %}<span class="texto-tenue">Sin registrar</span>{% endif %}</dd>
+                        <dt>{% icono 'info' %} Observaciones</dt>
+                        <dd>{% if mascota.observaciones %}{{ mascota.observaciones|linebreaksbr }}{% else %}<span class="texto-tenue">Sin observaciones</span>{% endif %}</dd>
+                    </dl>
+                </div>
+            </section>
+
+            <section class="tarjeta" aria-labelledby="titulo-categorias">
+                <header class="tarjeta__encabezado">
+                    <div>
+                        <h2 class="tarjeta__titulo" id="titulo-categorias">{% icono 'torta' %} Gasto por categoría</h2>
+                        <p class="tarjeta__subtitulo">{% if por_categoria %}Sobre {{ total_gastos|moneda }} acumulados{% else %}Distribución del gasto total{% endif %}</p>
+                    </div>
+                </header>
+                <div class="tarjeta__cuerpo">
+                    {% if por_categoria %}
+                    <ul class="barras">
+                        {% for fila in por_categoria %}
+                        {% widthratio fila.total total_gastos 100 as porcentaje %}
+                        <li class="{{ fila.categoria__nombre|clase_categoria }}">
+                            <div class="barras__cabeza">
+                                <span class="barras__nombre"><span class="leyenda__punto" aria-hidden="true"></span>{{ fila.categoria__nombre }}</span>
+                                <span class="barras__valor">{{ fila.total|moneda }}<span class="barras__porcentaje">{% if porcentaje == "0" %}&lt; 1 %{% else %}{{ porcentaje }} %{% endif %}</span></span>
+                            </div>
+                            <div class="barras__pista" aria-hidden="true">
+                                <div class="barras__relleno" style="--valor: {{ porcentaje }}%"></div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="vacio vacio--compacto">
+                        <span class="vacio__icono">{% icono 'torta' 'icono--lg' %}</span>
+                        <p class="vacio__titulo">Sin datos todavía</p>
+                        <p class="vacio__texto">Cuando registres gastos verás aquí cómo se reparten por categoría.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
     </div>
 </div>
-
-<section class="tarjeta">
-    <dl class="ficha">
-        <dt>Especie</dt><dd>{{ mascota.especie }}</dd>
-        <dt>Raza</dt><dd>{{ mascota.raza|default:"—" }}</dd>
-        <dt>Sexo</dt><dd>{{ mascota.get_sexo_display }}</dd>
-        <dt>Nacimiento</dt><dd>{{ mascota.fecha_nacimiento|date:"d/m/Y"|default:"—" }}</dd>
-        <dt>Peso</dt><dd>{% if mascota.peso %}{{ mascota.peso }} kg{% else %}—{% endif %}</dd>
-        <dt>Color</dt><dd>{{ mascota.color|default:"—" }}</dd>
-        <dt>Estado de salud</dt><dd>{{ mascota.estado_salud|default:"—" }}</dd>
-        <dt>Observaciones</dt><dd>{{ mascota.observaciones|default:"—"|linebreaksbr }}</dd>
-    </dl>
-</section>
-
-<section class="tarjeta">
-    <div class="encabezado">
-        <h2>Gastos · total $ {{ total_gastos|floatformat:"2g" }}</h2>
-        {% if mascota.activa %}<a class="boton" href="{% url 'mascotas:gasto_crear' %}?mascota={{ mascota.pk }}">+ Gasto</a>{% endif %}
-    </div>
-    {% if por_categoria %}
-    <p>{% for fila in por_categoria %}<span class="pastilla">{{ fila.categoria__nombre }}: $ {{ fila.total|floatformat:"2g" }}</span> {% endfor %}</p>
-    <table>
-        <thead><tr><th>Fecha</th><th>Producto</th><th>Categoría</th><th class="num">Cantidad</th><th class="num">Total</th><th></th></tr></thead>
-        <tbody>
-        {% for gasto in gastos %}
-            <tr>
-                <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
-                <td>{{ gasto.producto }}</td>
-                <td>{{ gasto.categoria }}</td>
-                <td class="num">{{ gasto.cantidad|floatformat:"-2" }}</td>
-                <td class="num">$ {{ gasto.valor_total|floatformat:"2g" }}</td>
-                <td><a href="{% url 'mascotas:gasto_editar' gasto.pk %}">Editar</a></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p class="vacio">Sin gastos registrados.</p>
-    {% endif %}
-</section>
-
-<section class="tarjeta">
-    <div class="encabezado">
-        <h2>Medicamentos</h2>
-        {% if mascota.activa %}<a class="boton" href="{% url 'mascotas:medicamento_crear' %}?mascota={{ mascota.pk }}">+ Medicamento</a>{% endif %}
-    </div>
-    {% if medicamentos %}
-    <table>
-        <thead><tr><th>Nombre</th><th>Dosis</th><th>Frecuencia</th><th>Inicio</th><th>Fin</th></tr></thead>
-        <tbody>
-        {% for m in medicamentos %}
-            <tr>
-                <td><a href="{% url 'mascotas:medicamento_editar' m.pk %}">{{ m.nombre }}</a></td>
-                <td>{{ m.dosis }}</td>
-                <td>{{ m.frecuencia }}</td>
-                <td>{{ m.fecha_inicio|date:"d/m/Y" }}</td>
-                <td>{{ m.fecha_fin|date:"d/m/Y"|default:"En curso" }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p class="vacio">Sin medicamentos registrados.</p>
-    {% endif %}
-</section>
+{% endwith %}
 {% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base_documento.html' %}
+{% load static ui %}
+{# Se renderiza sin contexto de request: no usar user, messages, csrf_token ni nada que dependa de la sesión. #}
+
+{% block titulo %}Algo salió mal{% endblock %}
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/publico.css' %}">{% endblock %}
+
+{% block cuerpo %}
+<div class="error-pagina">
+    <header>
+        <a class="error-pagina__marca" href="{% url 'mascotas:inicio' %}"><span class="logo">{% icono 'huella' %}</span> Gastos de Mascotas</a>
+    </header>
+
+    <main class="error-pagina__caja" id="contenido">
+        <p class="error-pagina__codigo"><span class="oculto-visual">Error </span>500</p>
+        <h1>Algo salió mal</h1>
+        <p class="error-pagina__texto">Ocurrió un error inesperado al procesar tu solicitud. Si el problema continúa, avisa al administrador de la aplicación.</p>
+
+        <div class="error-pagina__acciones">
+            <a class="btn btn--primario btn--lg" href="{% url 'mascotas:inicio' %}">{% icono 'inicio' %} Volver al panel</a>
+            <button type="button" class="btn btn--secundario btn--lg" data-volver hidden>{% icono 'volver' %} Volver atrás</button>
+        </div>
+        <p class="error-pagina__alterno">¿Fue algo puntual? <a href="">Recarga la página</a> para intentarlo otra vez.</p>
+    </main>
+
+    <footer class="error-pagina__pie">Gastos de Mascotas · Gestión y control</footer>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    {# «Volver atrás» solo aparece si hay una página anterior en el historial. #}
+    document.querySelectorAll('[data-volver]').forEach(function (boton) {
+        if (window.history.length > 1) boton.hidden = false;
+        boton.addEventListener('click', function () { window.history.back(); });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base_documento.html' %}
+{% load static ui %}
+{# Se renderiza con PermissionDenied. Contexto de Django: exception; el usuario puede ser anónimo. #}
+
+{% block titulo %}Acceso denegado{% endblock %}
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/publico.css' %}">{% endblock %}
+
+{% block cuerpo %}
+<div class="error-pagina">
+    <header>
+        <a class="error-pagina__marca" href="{% url 'mascotas:inicio' %}"><span class="logo">{% icono 'huella' %}</span> Gastos de Mascotas</a>
+    </header>
+
+    <main class="error-pagina__caja" id="contenido">
+        <p class="error-pagina__codigo"><span class="oculto-visual">Error </span>403</p>
+        <h1>Acceso denegado</h1>
+        {% if user.is_authenticated %}
+        <p class="error-pagina__texto">No tienes permiso para ver esta página. Solo puedes consultar los registros de tus propias mascotas.</p>
+        {% else %}
+        <p class="error-pagina__texto">Necesitas iniciar sesión con una cuenta autorizada para ver esta página.</p>
+        {% endif %}
+
+        <div class="error-pagina__acciones">
+            {% if user.is_authenticated %}
+            <a class="btn btn--primario btn--lg" href="{% url 'mascotas:inicio' %}">{% icono 'inicio' %} Volver al panel</a>
+            {% else %}
+            <a class="btn btn--primario btn--lg" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">{% icono 'usuario' %} Iniciar sesión</a>
+            {% endif %}
+            <button type="button" class="btn btn--secundario btn--lg" data-volver hidden>{% icono 'volver' %} Volver atrás</button>
+        </div>
+
+        {% if user.is_authenticated %}
+        <div class="error-pagina__sesion">
+            <span class="avatar avatar--xs {{ user|tono }}" aria-hidden="true">{{ user.username|inicial }}</span>
+            <span>Sesión iniciada como <strong>{{ user.get_full_name|default:user.username }}</strong></span>
+            <form method="post" action="{% url 'logout' %}" class="form-en-linea">
+                {% csrf_token %}
+                <button type="submit" class="btn btn--fantasma btn--sm">{% icono 'salir' 'icono--sm' %} Cambiar de cuenta</button>
+            </form>
+        </div>
+        {% endif %}
+    </main>
+
+    <footer class="error-pagina__pie">Gastos de Mascotas · Gestión y control</footer>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    {# «Volver atrás» solo aparece si hay una página anterior en el historial. #}
+    document.querySelectorAll('[data-volver]').forEach(function (boton) {
+        if (window.history.length > 1) boton.hidden = false;
+        boton.addEventListener('click', function () { window.history.back(); });
+    });
+</script>
+{% endblock %}

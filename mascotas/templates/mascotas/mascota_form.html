@@ -1,14 +1,126 @@
 {% extends 'base.html' %}
-{% load ui %}
-{% block titulo %}{{ titulo }}{% endblock %}
+{% load ui static %}
+
+{# Al editar se usa form.initial: tras un envío con errores, object ya trae los valores sin guardar. #}
+{% block titulo %}{{ titulo }}{% if object %} · {{ form.initial.nombre }}{% endif %}{% endblock %}
+
+{% block css %}<link rel="stylesheet" href="{% static 'mascotas/css/formularios.css' %}">{% endblock %}
+
+{% block migas %}
+<li><a href="{% url 'mascotas:mascota_lista' %}">Mascotas</a></li>
+{% if object %}
+<li><a href="{{ object.get_absolute_url }}">{{ form.initial.nombre }}</a></li>
+<li><span aria-current="page">Editar</span></li>
+{% else %}
+<li><span aria-current="page">Nueva</span></li>
+{% endif %}
+{% endblock %}
+
+{% block accion_barra %}{% endblock %}
+
 {% block contenido %}
-<header class="pagina-encabezado"><div class="pagina-encabezado__texto"><h1>{{ titulo }}</h1></div></header>
-<form method="post" class="formulario" novalidate>
-    {% csrf_token %}
-    <section class="formulario__seccion">
-        <div class="formulario__seccion-texto"><h2>Datos</h2></div>
-        <div class="formulario__rejilla">{% for field in form %}{% campo field %}{% endfor %}</div>
-    </section>
-    <div class="formulario__acciones"><button type="submit" class="btn btn--primario">Guardar</button></div>
-</form>
+<div class="pagina-formulario">
+    <header class="pagina-encabezado">
+        <div class="pagina-encabezado__texto">
+            <span class="pagina-encabezado__antetitulo">Mascotas</span>
+            <h1>{{ titulo }}</h1>
+            {% if object %}
+            <p>Actualiza su información. Los gastos y medicamentos registrados no cambian.</p>
+            {% with ini=form.initial %}
+            <div class="registro-actual celda-principal">
+                <span class="avatar avatar--sm {{ object|tono }}{% if not object.activa %} avatar--inactivo{% endif %}">{{ ini.nombre|inicial }}</span>
+                <span class="celda-principal__texto">
+                    <span class="celda-principal__titulo truncar">{{ ini.nombre }}</span>
+                    <span class="celda-principal__sub truncar">{{ ini.especie }}{% if ini.raza %} · {{ ini.raza }}{% endif %}{% if ini.fecha_nacimiento %} · {{ ini.fecha_nacimiento|edad }}{% endif %}</span>
+                </span>
+                {% if object.activa %}
+                <span class="insignia insignia--exito"><span class="insignia__punto"></span>Activa</span>
+                {% else %}
+                <span class="insignia insignia--neutra"><span class="insignia__punto"></span>Retirada</span>
+                {% endif %}
+            </div>
+            {% endwith %}
+            {% else %}
+            <p>Registra a tu mascota para llevar el control de sus gastos, tratamientos y cuidados.</p>
+            {% endif %}
+        </div>
+        {% if object %}
+        <div class="pagina-encabezado__acciones">
+            <a class="btn btn--secundario" href="{{ object.get_absolute_url }}">{% icono 'ojo' %} Ver ficha</a>
+            <a class="btn btn--peligro-suave" href="{% url 'mascotas:mascota_eliminar' object.pk %}">{% icono 'eliminar' %} Eliminar</a>
+        </div>
+        {% endif %}
+    </header>
+
+    <form method="post" class="formulario" novalidate>
+        {% csrf_token %}
+        {% for oculto in form.hidden_fields %}{{ oculto }}{% endfor %}
+
+        {% if form.errors %}
+        <div class="alerta alerta--peligro" role="alert">
+            {% icono 'alerta' %}
+            <div class="alerta__contenido">
+                <strong class="alerta__titulo">No se pudo guardar la mascota</strong>
+                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                <ul class="alerta__lista">{% for campo in form.visible_fields %}{% if campo.errors %}<li><a href="#{{ campo.id_for_label }}">{{ campo.label }}</a>: {{ campo.errors|first }}</li>{% endif %}{% endfor %}</ul>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if object and not object.activa %}
+        <div class="alerta alerta--info">
+            {% icono 'info' %}
+            <div class="alerta__contenido">
+                <strong class="alerta__titulo">Esta mascota está retirada</strong>
+                <p>Puedes corregir sus datos. Para registrarle nuevos gastos o medicamentos, reactívala desde su <a href="{{ object.get_absolute_url }}">ficha</a>.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <section class="formulario__seccion" aria-labelledby="seccion-identificacion">
+            <div class="formulario__seccion-texto">
+                <span class="icono-circulo formulario__seccion-icono">{% icono 'huella' %}</span>
+                <h2 id="seccion-identificacion">Identificación</h2>
+                <p>Los datos básicos para reconocer a tu mascota en listas, gastos y reportes.</p>
+            </div>
+            <div class="formulario__rejilla">
+                {% campo form.nombre %}
+                {% campo form.especie %}
+                {% campo form.raza %}
+                {% campo form.sexo %}
+            </div>
+        </section>
+
+        <section class="formulario__seccion" aria-labelledby="seccion-caracteristicas">
+            <div class="formulario__seccion-texto">
+                <span class="icono-circulo formulario__seccion-icono">{% icono 'peso' %}</span>
+                <h2 id="seccion-caracteristicas">Características</h2>
+                <p>Con la fecha de nacimiento calculamos su edad; el peso te ayuda a seguir su evolución.</p>
+            </div>
+            <div class="formulario__rejilla">
+                {% campo form.fecha_nacimiento %}
+                {% campo form.peso sufijo='kg' %}
+                {% campo form.color %}
+            </div>
+        </section>
+
+        <section class="formulario__seccion" aria-labelledby="seccion-salud">
+            <div class="formulario__seccion-texto">
+                <span class="icono-circulo formulario__seccion-icono">{% icono 'salud' %}</span>
+                <h2 id="seccion-salud">Salud</h2>
+                <p>Su estado actual y cualquier detalle importante para su cuidado, como alergias o dieta especial.</p>
+            </div>
+            <div class="formulario__rejilla">
+                {% campo form.estado_salud ancho='completo' %}
+                {% campo form.observaciones ancho='completo' %}
+            </div>
+        </section>
+
+        <div class="formulario__acciones">
+            <p class="formulario__acciones-nota">Los campos con <span class="campo__requerido">*</span> son obligatorios.</p>
+            <a class="btn btn--secundario" href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'mascotas:mascota_lista' %}{% endif %}">Cancelar</a>
+            <button type="submit" class="btn btn--primario">{% icono 'check' %} {% if object %}Guardar cambios{% else %}Guardar mascota{% endif %}</button>
+        </div>
+    </form>
+</div>
 {% endblock %}
