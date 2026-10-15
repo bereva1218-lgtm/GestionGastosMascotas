@@ -1,0 +1,81 @@
+test_incluye_primer_y_ultimo_dia_y_excluye_mes_vecino (mascotas.test_reglas.TotalMensualTests.test_incluye_primer_y_ultimo_dia_y_excluye_mes_vecino) ... ERROR
+test_mes_fuera_de_rango_es_invalido (mascotas.test_reglas.TotalMensualTests.test_mes_fuera_de_rango_es_invalido) ... 
+  test_mes_fuera_de_rango_es_invalido (mascotas.test_reglas.TotalMensualTests.test_mes_fuera_de_rango_es_invalido) (mes=0) ... ERROR
+  test_mes_fuera_de_rango_es_invalido (mascotas.test_reglas.TotalMensualTests.test_mes_fuera_de_rango_es_invalido) (mes=13) ... ERROR
+test_mismo_mes_de_otro_anio_no_se_suma (mascotas.test_reglas.TotalMensualTests.test_mismo_mes_de_otro_anio_no_se_suma) ... ERROR
+test_sin_gastos_el_total_es_cero (mascotas.test_reglas.TotalMensualTests.test_sin_gastos_el_total_es_cero) ... ERROR
+test_suma_solo_los_gastos_del_mes_pedido (mascotas.test_reglas.TotalMensualTests.test_suma_solo_los_gastos_del_mes_pedido) ... ERROR
+
+======================================================================
+ERROR: test_incluye_primer_y_ultimo_dia_y_excluye_mes_vecino (mascotas.test_reglas.TotalMensualTests.test_incluye_primer_y_ultimo_dia_y_excluye_mes_vecino)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\test_reglas.py", line 37, in test_incluye_primer_y_ultimo_dia_y_excluye_mes_vecino
+    self.assertEqual(total_mensual(gastos, 2026, 1), Decimal('300'))
+                     ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\reglas.py", line 5, in total_mensual
+    raise NotImplementedError
+NotImplementedError
+
+======================================================================
+ERROR: test_mes_fuera_de_rango_es_invalido (mascotas.test_reglas.TotalMensualTests.test_mes_fuera_de_rango_es_invalido) (mes=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\test_reglas.py", line 42, in test_mes_fuera_de_rango_es_invalido
+    total_mensual([], 2026, mes)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\reglas.py", line 5, in total_mensual
+    raise NotImplementedError
+NotImplementedError
+
+======================================================================
+ERROR: test_mes_fuera_de_rango_es_invalido (mascotas.test_reglas.TotalMensualTests.test_mes_fuera_de_rango_es_invalido) (mes=13)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\test_reglas.py", line 42, in test_mes_fuera_de_rango_es_invalido
+    total_mensual([], 2026, mes)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\reglas.py", line 5, in total_mensual
+    raise NotImplementedError
+NotImplementedError
+
+======================================================================
+ERROR: test_mismo_mes_de_otro_anio_no_se_suma (mascotas.test_reglas.TotalMensualTests.test_mismo_mes_de_otro_anio_no_se_suma)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\test_reglas.py", line 49, in test_mismo_mes_de_otro_anio_no_se_suma
+    self.assertEqual(total_mensual(gastos, 2026, 10), Decimal('250'))
+                     ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\reglas.py", line 5, in total_mensual
+    raise NotImplementedError
+NotImplementedError
+
+======================================================================
+ERROR: test_sin_gastos_el_total_es_cero (mascotas.test_reglas.TotalMensualTests.test_sin_gastos_el_total_es_cero)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\test_reglas.py", line 28, in test_sin_gastos_el_total_es_cero
+    self.assertEqual(total_mensual([], 2026, 10), Decimal('0'))
+                     ~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\reglas.py", line 5, in total_mensual
+    raise NotImplementedError
+NotImplementedError
+
+======================================================================
+ERROR: test_suma_solo_los_gastos_del_mes_pedido (mascotas.test_reglas.TotalMensualTests.test_suma_solo_los_gastos_del_mes_pedido)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\test_reglas.py", line 25, in test_suma_solo_los_gastos_del_mes_pedido
+    self.assertEqual(total_mensual(gastos, 2026, 10), Decimal('42500.50'))
+                     ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\santi\OneDrive\Escritorio\GestionGastosMascotas-main\mascotas\reglas.py", line 5, in total_mensual
+    raise NotImplementedError
+NotImplementedError
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.005s
+
+FAILED (errors=6)
+Found 5 test(s).
+Skipping setup of unused database(s): default.
+System check identified no issues (0 silenced).
